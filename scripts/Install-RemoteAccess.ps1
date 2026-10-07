@@ -36,7 +36,7 @@
 
 .NOTES
     CHANGES MADE TO THIS PC:
-      - Installs Tailscale with winget (tailscale.tailscale) if missing; signs in; enables Run unattended
+      - Installs Tailscale with winget (Tailscale.Tailscale) if missing; signs in; enables Run unattended
       - Registry: HKLM\System\CurrentControlSet\Control\Terminal Server: fDenyTSConnections = 0
       - Registry: ...\Terminal Server\WinStations\RDP-Tcp: UserAuthentication = 1
       - Enables the built-in Remote Desktop firewall rules
@@ -44,7 +44,7 @@
       - -AllowPasswordSignIn: HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device:
         DevicePasswordLessBuildVersion = 0
     NETWORK ACCESS: winget (Microsoft package source, Tailscale's official installer); Tailscale's own servers.
-    UNDO: Settings > System > Remote Desktop > Off; tailscale logout; winget uninstall --id tailscale.tailscale.
+    UNDO: Settings > System > Remote Desktop > Off; tailscale logout; winget uninstall --id Tailscale.Tailscale.
     Full reference: docs/scripts-reference.md
 #>
 #Requires -RunAsAdministrator
@@ -81,7 +81,7 @@ else {
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
         throw 'winget is not available. Install Tailscale manually from https://tailscale.com/download/windows and run this script again.'
     }
-    winget install --id tailscale.tailscale -e --silent --accept-source-agreements --accept-package-agreements
+    winget install --id Tailscale.Tailscale -e --silent --accept-source-agreements --accept-package-agreements
     if (-not (Test-Path $TailscaleExe)) {
         throw 'Tailscale installation failed. Install it manually from https://tailscale.com/download/windows and run this script again.'
     }

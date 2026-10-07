@@ -70,7 +70,7 @@ Skip this part if the script ran successfully, except for **A3**.
 
 1. Install from <https://tailscale.com/download/windows>, or:
    ```powershell
-   winget install --id tailscale.tailscale -e
+   winget install --id Tailscale.Tailscale -e
    ```
 2. Tailscale tray icon → **Log in** and sign in (Google, Microsoft, GitHub, Apple…).
 

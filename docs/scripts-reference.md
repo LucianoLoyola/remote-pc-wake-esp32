@@ -107,7 +107,7 @@ Sets up Tailscale and Remote Desktop. [Runbook 04, Part A](04-remote-access-tail
 
 | What | Change |
 |---|---|
-| Software | Installs **Tailscale** with winget (package `tailscale.tailscale`) if missing |
+| Software | Installs **Tailscale** with winget (package `Tailscale.Tailscale`) if missing |
 | Tailscale | Signs in (you approve it in your browser) and turns on *Run unattended* |
 | Registry: `HKLM\System\CurrentControlSet\Control\Terminal Server` | `fDenyTSConnections` = 0 (Remote Desktop on). Skipped with `-SkipRemoteDesktop` or on Windows Home. |
 | Registry: `...\Terminal Server\WinStations\RDP-Tcp` | `UserAuthentication` = 1 (Network Level Authentication required) |
@@ -123,7 +123,7 @@ Sets up Tailscale and Remote Desktop. [Runbook 04, Part A](04-remote-access-tail
 - Remote Desktop: **Settings → System → Remote Desktop → Off**.
 - Firewall restriction: `Get-NetFirewallRule -Group '@FirewallAPI.dll,-28752' | Set-NetFirewallRule -RemoteAddress Any`
 - Password sign-in: **Settings → Accounts → Sign-in options** → turn the Windows Hello-only option back on.
-- Tailscale: `tailscale logout`, then `winget uninstall --id tailscale.tailscale`.
+- Tailscale: `tailscale logout`, then `winget uninstall --id Tailscale.Tailscale`.
 
 ---
 
