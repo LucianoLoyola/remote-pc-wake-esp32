@@ -162,7 +162,11 @@ Shut the PC down, wait about 30 seconds, then:
 - **Placement:** near the router, so the Wi-Fi signal is strong and the ESP32 is on the **same network** as the PC. Don't use a guest network.
 - **Power:** either
   - the router's **USB port**, if it has one and keeps it powered (check: some routers turn the USB port off when nothing is mounted), or
-  - any 5 V USB phone charger.
+  - any 5 V USB phone charger (1 A or more) plugged into a wall outlet. This is the most reliable option, and the one to use if your router has no USB port.
+
+  Don't power it from the target PC's USB ports, a TV or a monitor: most of them cut power when the device is off, so the ESP32 would turn off exactly when you need it to wake the PC.
+
+  The ESP32 doesn't have to sit next to the router; anywhere with good Wi-Fi signal works. If it's far from the router, raise `WIFI_TX_POWER`.
 - **Enclosure (recommended):** a small plastic case protects the board from dust and short circuits. Don't use a metal box, because it blocks Wi-Fi.
 - The firmware is tuned for 24/7 operation: the CPU runs at 80 MHz and idles between checks, Wi-Fi modem sleep is on, and transmit power is reduced. Typical consumption is about 0.2–0.3 W, and the board stays barely warm to the touch.
 - Polling doesn't wear out the flash memory. Commands are handled entirely in RAM, and the firmware never writes to flash during normal operation.
