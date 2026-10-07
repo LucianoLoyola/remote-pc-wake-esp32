@@ -1,0 +1,14 @@
+# Local configuration with secrets (Wi-Fi password, bot token)
+firmware/**/config.h
+
+# Build output
+build/
+*.bin
+*.elf
+*.map
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
