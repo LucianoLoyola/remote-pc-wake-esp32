@@ -149,7 +149,7 @@ Detailed runbook: [03 — Telegram bot, flashing and deployment](03-telegram-bot
    ```
    Write down the address in `Connected. IP: ...` (you'll need it in Phase 6), then press Ctrl+C to close the monitor. → [Step 5](03-telegram-bot-flash-and-deploy.md#step-5--upload-the-firmware)
 
-**Checkpoint:** the bot sends **ESP32 online (v1.2.1)** with buttons, and `/status` shows the PC's CPU, RAM and disks.
+**Checkpoint:** the bot sends **ESP32 online (vX.Y.Z)** with buttons, and `/status` shows the PC's CPU, RAM and disks.
 
 ---
 

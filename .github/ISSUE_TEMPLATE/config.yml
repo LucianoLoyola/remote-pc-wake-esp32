@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Setup guide
+    url: https://github.com/LucianoLoyola/remote-pc-wake-esp32/blob/main/docs/00-getting-started.md
+    about: Step-by-step onboarding, with troubleshooting for each phase.
+  - name: Report a security vulnerability
+    url: https://github.com/LucianoLoyola/remote-pc-wake-esp32/security/advisories/new
+    about: Please report security problems privately, not as public issues.

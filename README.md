@@ -110,8 +110,11 @@ You shouldn't have to take our word for it, so the project makes the scripts eas
 ## Repository layout
 
 ```
-├── .github/workflows/
-│   └── powershell-analysis.yml    # script checks on pull requests to main and on main
+├── .github/
+│   ├── ISSUE_TEMPLATE/            # bug report, hardware report and feature request forms
+│   ├── pull_request_template.md
+│   └── workflows/
+│       └── powershell-analysis.yml  # script checks on pull requests to main and on main
 ├── agent/
 │   └── RemotePcWakeAgent.ps1      # PC agent (runs as a startup task)
 ├── docs/
@@ -142,7 +145,10 @@ You shouldn't have to take our word for it, so the project makes the scripts eas
 │   └── lib/Common.ps1             # shared helpers
 ├── tests/
 │   └── Invoke-ScriptAnalysis.ps1  # syntax, forbidden patterns, PSScriptAnalyzer
-└── PSScriptAnalyzerSettings.psd1  # analyzer rules (and the reason for each exclusion)
+├── PSScriptAnalyzerSettings.psd1  # analyzer rules (and the reason for each exclusion)
+├── CONTRIBUTING.md                # development setup and project rules
+├── CODE_OF_CONDUCT.md
+└── SECURITY.md                    # how to report vulnerabilities, security model
 ```
 
 ## Security notes
@@ -157,7 +163,7 @@ You shouldn't have to take our word for it, so the project makes the scripts eas
 
 ## Roadmap / pending
 
-Contributions are welcome:
+Contributions are welcome (see [CONTRIBUTING.md](CONTRIBUTING.md)):
 
 - [ ] **Multiple devices**: wake and control several PCs/NAS/consoles from one ESP32 (`/wake desktop`, `/wake nas`, a device picker in the web UI and buttons, per-device MAC/IP/agent token)
 - [ ] Support for Ethernet ESP32 boards (WT32-ETH01, Olimex ESP32-POE)
@@ -171,15 +177,10 @@ Contributions are welcome:
 
 ## Contributing
 
-1. Fork the repository and create a branch (`git checkout -b feature/my-idea`).
-2. Keep secrets out of commits: never add `config.h`.
-3. If you change or add a PowerShell script:
-   - run `.\tests\Invoke-ScriptAnalysis.ps1`; it must pass (GitHub runs it on your pull request too);
-   - update its `.NOTES` help section and the [Scripts reference](docs/scripts-reference.md) with every change it makes, every address it contacts, and how to undo it.
-4. Test on real hardware and say which board and PC you used in the pull request.
-5. Open a pull request with a clear description.
+Contributions are welcome: bug reports, **hardware reports** (does it work on your board, motherboard and router?), documentation and code. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup and the project rules.
 
-Bug reports with your board model, motherboard and Serial Monitor output are very helpful.
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md): report vulnerabilities privately, not as public issues.
 
 ## License
 
