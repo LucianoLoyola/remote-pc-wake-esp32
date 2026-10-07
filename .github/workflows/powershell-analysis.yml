@@ -1,0 +1,27 @@
+name: PowerShell analysis
+
+# Checks every PowerShell script on each change: syntax (Windows PowerShell 5.1),
+# forbidden patterns (no downloading or hiding code) and PSScriptAnalyzer.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: powershell
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+
+      - name: Analyze scripts
+        shell: powershell
+        run: .\tests\Invoke-ScriptAnalysis.ps1

@@ -12,6 +12,11 @@
 
 .EXAMPLE
     .\Send-MagicPacket.ps1 -MacAddress "AA-BB-CC-DD-EE-FF" -Broadcast "192.168.0.255"
+
+.NOTES
+    CHANGES MADE TO THIS PC: none. Sends a UDP broadcast (port 9) on the local network.
+    NETWORK ACCESS: local network only.
+    Full reference: docs/scripts-reference.md
 #>
 param(
     [Parameter(Mandatory = $true)]

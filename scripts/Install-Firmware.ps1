@@ -25,6 +25,12 @@
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -Monitor
+
+.NOTES
+    CHANGES MADE TO THIS PC: none (Arduino CLI keeps temporary build files in its cache).
+      Writes the firmware to the ESP32 over USB.
+    NETWORK ACCESS: none.
+    Full reference: docs/scripts-reference.md
 #>
 [CmdletBinding()]
 param(
@@ -60,7 +66,7 @@ if ($CompileOnly) { return }
 # ---------------------------------------------------------------------------
 Write-Step 'Finding the ESP32'
 if (-not $Port) {
-    $boards = @(Get-Esp32SerialPorts | Where-Object { $_.Port -and $_.Status -eq 'OK' })
+    $boards = @(Get-Esp32SerialPort | Where-Object { $_.Port -and $_.Status -eq 'OK' })
     if ($boards.Count -eq 0) {
         throw 'No ESP32 detected. Connect it with a USB data cable (run Install-DevTools.ps1 to check the driver), or pass -Port COMx.'
     }

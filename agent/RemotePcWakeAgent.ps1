@@ -18,6 +18,16 @@
 
 .PARAMETER ConfigPath
     Path to config.json. Defaults to %ProgramData%\RemotePcWake\config.json.
+
+.NOTES
+    WHAT IT DOES WHILE RUNNING (as SYSTEM, started by Task Scheduler):
+      - Listens on TCP port 8765 and only answers requests carrying the token
+      - Allowed actions: status, shutdown, restart, sleep, lock, cancel. It can't run commands sent to it.
+      - Runs shutdown.exe and, if installed, nvidia-smi
+      - Writes C:\ProgramData\RemotePcWake\agent.log (rotated at 1 MB)
+    NETWORK ACCESS: no outgoing connections; only answers requests from the local network.
+    UNDO: scripts\Uninstall-Agent.ps1
+    Full reference: docs/scripts-reference.md
 #>
 param(
     [string]$ConfigPath = (Join-Path $env:ProgramData 'RemotePcWake\config.json')
@@ -124,6 +134,7 @@ function Write-Log([string]$Message) {
     }
     catch {
         # Logging must never stop the agent
+        Write-Verbose "Could not write to the log: $($_.Exception.Message)"
     }
 }
 
@@ -138,7 +149,7 @@ function Send-Json($Context, [int]$StatusCode, $Body) {
     $response.Close()
 }
 
-function Get-UptimeSeconds {
+function Get-Uptime {
     $boot = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
     return [int]((Get-Date) - $boot).TotalSeconds
 }
@@ -215,7 +226,7 @@ function Get-Status {
     }
 }
 
-function Get-DelaySeconds($Request) {
+function Get-RequestedDelay($Request) {
     $raw = $Request.QueryString['delay']
     if (-not $raw) { return 0 }
     $value = 0
@@ -254,7 +265,7 @@ function Invoke-ShutdownCommand([string]$Action, [int]$DelaySeconds) {
     return "$verb in $(Format-Delay $delay)."
 }
 
-function Handle-Request($Context) {
+function Invoke-Request($Context) {
     $request = $Context.Request
     $path = $request.Url.AbsolutePath.TrimEnd('/').ToLowerInvariant()
     $method = $request.HttpMethod
@@ -279,8 +290,8 @@ function Handle-Request($Context) {
     switch ($path) {
         { $_ -in '/api/shutdown', '/api/restart' } {
             $action = $path.Substring(5)
-            $message = Invoke-ShutdownCommand $action (Get-DelaySeconds $request)
-            Send-Json $Context 200 ([ordered]@{ ok = $true; message = $message; uptimeSeconds = Get-UptimeSeconds })
+            $message = Invoke-ShutdownCommand $action (Get-RequestedDelay $request)
+            Send-Json $Context 200 ([ordered]@{ ok = $true; message = $message; uptimeSeconds = Get-Uptime })
         }
         '/api/cancel' {
             $cancelled = ((Invoke-ShutdownExe @('/a')) -eq 0)
@@ -318,13 +329,18 @@ Write-Log "Agent $AgentVersion listening on port $port"
 while ($listener.IsListening) {
     $context = $listener.GetContext()
     try {
-        Handle-Request $context
+        Invoke-Request $context
     }
     catch [System.ArgumentException] {
         Send-Json $context 400 @{ ok = $false; message = $_.Exception.Message }
     }
     catch {
         Write-Log "Error: $($_.Exception.Message)"
-        try { Send-Json $context 500 @{ ok = $false; message = $_.Exception.Message } } catch { }
+        try {
+            Send-Json $context 500 @{ ok = $false; message = $_.Exception.Message }
+        }
+        catch {
+            Write-Log "Could not send the error response: $($_.Exception.Message)"
+        }
     }
 }

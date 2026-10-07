@@ -25,7 +25,7 @@ function Invoke-NativeQuiet([string]$FilePath, [string[]]$Arguments) {
 }
 
 # Reloads PATH from the registry so tools installed by winget in this session are found.
-function Update-SessionPath {
+function Sync-SessionPath {
     $machine = [Environment]::GetEnvironmentVariable('Path', 'Machine')
     $user = [Environment]::GetEnvironmentVariable('Path', 'User')
     $env:Path = "$machine;$user"
@@ -73,7 +73,7 @@ $Script:Esp32UsbVendors = @{
 }
 
 # Serial ports that look like an ESP32 board: @{ Port = 'COM3'; Chip = '...'; Status = 'OK' }
-function Get-Esp32SerialPorts {
+function Get-Esp32SerialPort {
     $devices = Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue |
         Where-Object { $_.InstanceId -match ($Script:Esp32UsbVendors.Keys -join '|') }
     foreach ($device in $devices) {
@@ -91,7 +91,7 @@ function Get-Esp32SerialPorts {
 function Find-ArduinoCli {
     $command = Get-Command arduino-cli -ErrorAction SilentlyContinue
     if (-not $command) {
-        Update-SessionPath
+        Sync-SessionPath
         $command = Get-Command arduino-cli -ErrorAction SilentlyContinue
     }
     if ($command) { return $command.Source }

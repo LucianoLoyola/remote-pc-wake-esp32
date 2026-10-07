@@ -33,6 +33,19 @@
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\scripts\Install-RemoteAccess.ps1 -RestrictRdpToTailscale -AllowPasswordSignIn
+
+.NOTES
+    CHANGES MADE TO THIS PC:
+      - Installs Tailscale with winget (tailscale.tailscale) if missing; signs in; enables Run unattended
+      - Registry: HKLM\System\CurrentControlSet\Control\Terminal Server: fDenyTSConnections = 0
+      - Registry: ...\Terminal Server\WinStations\RDP-Tcp: UserAuthentication = 1
+      - Enables the built-in Remote Desktop firewall rules
+      - -RestrictRdpToTailscale: those rules only accept Tailscale ranges and the local subnet
+      - -AllowPasswordSignIn: HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device:
+        DevicePasswordLessBuildVersion = 0
+    NETWORK ACCESS: winget (Microsoft package source, Tailscale's official installer); Tailscale's own servers.
+    UNDO: Settings > System > Remote Desktop > Off; tailscale logout; winget uninstall --id tailscale.tailscale.
+    Full reference: docs/scripts-reference.md
 #>
 #Requires -RunAsAdministrator
 [CmdletBinding()]

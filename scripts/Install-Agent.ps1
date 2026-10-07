@@ -23,6 +23,16 @@
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\scripts\Install-Agent.ps1 -Esp32Address 192.168.1.50
+
+.NOTES
+    CHANGES MADE TO THIS PC:
+      - Creates C:\ProgramData\RemotePcWake\ (agent script + config.json with a random token),
+        readable only by SYSTEM and Administrators
+      - Firewall: inbound rule "Remote PC Wake Agent", TCP port 8765, only from -Esp32Address
+      - Task Scheduler: "Remote PC Wake Agent", runs the agent as SYSTEM at startup
+    NETWORK ACCESS: only http://localhost:8765 to test the agent.
+    UNDO: scripts\Uninstall-Agent.ps1
+    Full reference: docs/scripts-reference.md
 #>
 #Requires -RunAsAdministrator
 [CmdletBinding()]
@@ -43,7 +53,7 @@ $ConfigPath = Join-Path $InstallDir 'config.json'
 $TaskName = 'Remote PC Wake Agent'
 $FirewallRuleName = 'RemotePcWakeAgent'
 
-function New-Token {
+function Get-RandomToken {
     $bytes = New-Object byte[] 24
     [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
     return ($bytes | ForEach-Object { $_.ToString('x2') }) -join ''
@@ -69,7 +79,7 @@ if ((Test-Path $ConfigPath) -and -not $NewToken) {
     if ($existing.DiskWarningPercent) { $diskWarningPercent = $existing.DiskWarningPercent }
 }
 $tokenIsNew = -not $token
-if ($tokenIsNew) { $token = New-Token }
+if ($tokenIsNew) { $token = Get-RandomToken }
 
 $config = [ordered]@{
     Token              = $token

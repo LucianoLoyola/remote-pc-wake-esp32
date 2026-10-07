@@ -56,10 +56,17 @@ The script creates `firmware/remote-pc-wake/config.h` and fills it in:
 | Telegram ID | Detected: the script asks you to send any message to your bot |
 | Wi-Fi name and password, bot token, web UI password | Asked (the Wi-Fi name is suggested if the PC is on Wi-Fi) |
 
-You can also pass values as parameters (`-WifiSsid`, `-WifiPassword`, `-BotToken`, `-ChatId`, `-PcMac`, `-PcIp`, `-AgentToken`, `-WebPassword`). If `config.h` already exists, the script keeps its values and only changes what you pass, so you can run it again to change a single setting. For example:
+You can also pass values as parameters (`-WifiSsid`, `-BotToken`, `-ChatId`, `-PcMac`, `-PcIp`, `-AgentToken`). Passwords are always asked for securely, never typed on the command line. If `config.h` already exists, the script keeps its values and only changes what you pass, so you can run it again to change a single setting:
+
+| To change | Run with |
+|---|---|
+| Wi-Fi network | `-WifiSsid "NewNetwork"` (asks for its password) |
+| Bot token | `-BotToken "123:ABC..."` |
+| Web UI password | `-ChangeWebPassword` (asks for the new one) |
+| Disable the web UI | `-DisableWebUi` |
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -WifiSsid "NewNetwork" -WifiPassword "..."
+powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -WifiSsid "NewNetwork"
 ```
 
 > Running it on a different PC than the one you want to wake? Pass `-PcMac` and `-PcIp` with the target PC's values.

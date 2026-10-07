@@ -1,5 +1,7 @@
 # remote-pc-wake-esp32
 
+[![PowerShell analysis](https://github.com/<owner>/remote-pc-wake-esp32/actions/workflows/powershell-analysis.yml/badge.svg)](https://github.com/<owner>/remote-pc-wake-esp32/actions/workflows/powershell-analysis.yml)
+
 **Turn your PC on and off from anywhere with a cheap ESP32 and a Telegram bot, get alerts about it, and control it remotely over Tailscale.**
 
 No port forwarding, no public IP, no always-on PC. It works behind CGNAT.
@@ -96,9 +98,20 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -Monitor
 
 See [all the scripts](docs/00-getting-started.md#all-the-scripts).
 
+## Can I trust the scripts?
+
+You shouldn't have to take our word for it, so the project makes the scripts easy to check:
+
+- **Every change is documented.** The [Scripts reference](docs/scripts-reference.md) lists, for each script, every setting it changes, every internet address it contacts, and how to undo it. The same information is in each script's help: `Get-Help .\scripts\<script>.ps1 -Full`.
+- **Automated analysis on every change.** GitHub checks every script with Microsoft's [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer). It also rejects code that downloads and runs other code, or that hides what it does. The results are public (badge at the top), and you can [run the same checks yourself](docs/scripts-reference.md#automated-analysis).
+- **Plain code, no telemetry.** No obfuscation, no binaries, no hidden network access. Software is installed only through winget and the official Arduino/Espressif indexes.
+- **Check before changing.** `Enable-WakeOnLan.ps1 -CheckOnly` reports the configuration without touching it.
+
 ## Repository layout
 
 ```
+├── .github/workflows/
+│   └── powershell-analysis.yml    # automated script checks on every change
 ├── agent/
 │   └── RemotePcWakeAgent.ps1      # PC agent (runs as a startup task)
 ├── docs/
@@ -108,23 +121,27 @@ See [all the scripts](docs/00-getting-started.md#all-the-scripts).
 │   ├── 03-telegram-bot-flash-and-deploy.md
 │   ├── 04-remote-access-tailscale.md
 │   ├── 05-pc-agent.md
+│   ├── scripts-reference.md       # what each script changes, contacts, and how to undo it
 │   └── usage.md                   # commands, web UI, notifications
 ├── firmware/
 │   └── remote-pc-wake/
 │       ├── remote-pc-wake.ino     # ESP32 firmware
 │       ├── web_ui.h               # web UI page
 │       └── config.example.h       # copy to config.h (git-ignored)
-└── scripts/                       # one script per Windows configuration
-    ├── Enable-WakeOnLan.ps1       # network adapter + Fast Startup for Wake-on-LAN
-    ├── Install-RemoteAccess.ps1   # Tailscale + Remote Desktop
-    ├── Set-AutoSleep.ps1          # sleep after N minutes of inactivity
-    ├── Install-Agent.ps1          # install/update the PC agent
-    ├── Uninstall-Agent.ps1
-    ├── Install-DevTools.ps1       # Arduino CLI/IDE, ESP32 package, libraries
-    ├── New-FirmwareConfig.ps1     # create/update config.h
-    ├── Install-Firmware.ps1       # build and upload the firmware
-    ├── Send-MagicPacket.ps1       # test WoL from another Windows PC
-    └── lib/Common.ps1             # shared helpers
+├── scripts/                       # one script per Windows configuration
+│   ├── Enable-WakeOnLan.ps1       # network adapter + Fast Startup for Wake-on-LAN
+│   ├── Install-RemoteAccess.ps1   # Tailscale + Remote Desktop
+│   ├── Set-AutoSleep.ps1          # sleep after N minutes of inactivity
+│   ├── Install-Agent.ps1          # install/update the PC agent
+│   ├── Uninstall-Agent.ps1
+│   ├── Install-DevTools.ps1       # Arduino CLI/IDE, ESP32 package, libraries
+│   ├── New-FirmwareConfig.ps1     # create/update config.h
+│   ├── Install-Firmware.ps1       # build and upload the firmware
+│   ├── Send-MagicPacket.ps1       # test WoL from another Windows PC
+│   └── lib/Common.ps1             # shared helpers
+├── tests/
+│   └── Invoke-ScriptAnalysis.ps1  # syntax, forbidden patterns, PSScriptAnalyzer
+└── PSScriptAnalyzerSettings.psd1  # analyzer rules (and the reason for each exclusion)
 ```
 
 ## Security notes
@@ -155,8 +172,11 @@ Contributions are welcome:
 
 1. Fork the repository and create a branch (`git checkout -b feature/my-idea`).
 2. Keep secrets out of commits: never add `config.h`.
-3. Test on real hardware and say which board and PC you used in the pull request.
-4. Open a pull request with a clear description.
+3. If you change or add a PowerShell script:
+   - run `.\tests\Invoke-ScriptAnalysis.ps1`; it must pass (GitHub runs it on your pull request too);
+   - update its `.NOTES` help section and the [Scripts reference](docs/scripts-reference.md) with every change it makes, every address it contacts, and how to undo it.
+4. Test on real hardware and say which board and PC you used in the pull request.
+5. Open a pull request with a clear description.
 
 Bug reports with your board model, motherboard and Serial Monitor output are very helpful.
 

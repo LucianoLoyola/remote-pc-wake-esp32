@@ -16,6 +16,16 @@
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\scripts\Install-DevTools.ps1
+
+.NOTES
+    CHANGES MADE TO THIS PC:
+      - Installs with winget, if missing: Git (Git.Git), Arduino IDE (ArduinoSA.IDE.stable), Arduino CLI (ArduinoSA.CLI)
+      - ESP32 board package in %LOCALAPPDATA%\Arduino15\
+      - Libraries UniversalTelegramBot and ArduinoJson in Documents\Arduino\libraries\
+    NETWORK ACCESS: winget (Microsoft package source and official downloads), downloads.arduino.cc,
+      espressif.github.io, github.com.
+    UNDO: winget uninstall each tool; delete %LOCALAPPDATA%\Arduino15 and the two library folders.
+    Full reference: docs/scripts-reference.md
 #>
 [CmdletBinding()]
 param(
@@ -83,7 +93,7 @@ Write-Ok "Libraries installed: $($Libraries -join ', ')"
 
 # ---------------------------------------------------------------------------
 Write-Step 'Checking the ESP32 USB connection'
-$boards = @(Get-Esp32SerialPorts)
+$boards = @(Get-Esp32SerialPort)
 if ($boards.Count -eq 0) {
     Write-Warn 'No ESP32 board detected. Connect it with a USB DATA cable and run this check again:'
     Write-Info 'powershell -ExecutionPolicy Bypass -File .\scripts\Install-DevTools.ps1'

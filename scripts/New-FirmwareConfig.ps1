@@ -15,7 +15,8 @@
 .PARAMETER WifiSsid
     Wi-Fi network name (2.4 GHz).
 .PARAMETER WifiPassword
-    Wi-Fi password. Asked for securely if omitted.
+    Wi-Fi password (SecureString). Asked for securely when config.h has none
+    or when -WifiSsid changes the network.
 .PARAMETER BotToken
     Telegram bot token from @BotFather.
 .PARAMETER ChatId
@@ -27,7 +28,11 @@
 .PARAMETER AgentToken
     PC agent token. Read from the installed agent if omitted (Administrator).
 .PARAMETER WebPassword
-    Web UI password. Leave empty to disable the web UI.
+    Web UI password (SecureString). Asked for securely the first time.
+.PARAMETER ChangeWebPassword
+    Ask for a new web UI password even if one is already set.
+.PARAMETER DisableWebUi
+    Remove the web UI password, which disables the web UI.
 .PARAMETER OutputPath
     Where to write config.h. Default: firmware\remote-pc-wake\config.h
 
@@ -35,18 +40,29 @@
     powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -WifiSsid "MyWifi" -BotToken "123:ABC"
+    powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -WifiSsid "NewNetwork"
+    Changes the Wi-Fi network; the script asks for its password.
+
+.NOTES
+    CHANGES MADE TO THIS PC: writes only firmware\remote-pc-wake\config.h in the repository
+      (git-ignored; contains your secrets in plain text because the firmware needs them).
+    NETWORK ACCESS: api.telegram.org (getMe, getUpdates), only to detect your Telegram ID.
+      It never sends messages.
+    UNDO: delete config.h.
+    Full reference: docs/scripts-reference.md
 #>
 [CmdletBinding()]
 param(
     [string]$WifiSsid,
-    [string]$WifiPassword,
+    [SecureString]$WifiPassword,
     [string]$BotToken,
     [string]$ChatId,
     [string]$PcMac,
     [string]$PcIp,
     [string]$AgentToken,
-    [string]$WebPassword,
+    [SecureString]$WebPassword,
+    [switch]$ChangeWebPassword,
+    [switch]$DisableWebUi,
     [string]$OutputPath
 )
 
@@ -72,7 +88,7 @@ function Get-Define([string]$Text, [string]$Key) {
     return ''
 }
 
-function Set-Define([string]$Text, [string]$Key, [string]$Value) {
+function Edit-Define([string]$Text, [string]$Key, [string]$Value) {
     $escaped = $Value.Replace('\', '\\').Replace('"', '\"')
     $pattern = "(?m)^(#define\s+$Key\s+)`"(?:[^`"\\]|\\.)*`""
     if ($Text -notmatch $pattern) { throw "Setting $Key not found in the template." }
@@ -83,11 +99,16 @@ function Test-Configured([string]$Value) {
     return $Placeholders -notcontains $Value
 }
 
-function Read-Secret([string]$Prompt) {
-    $secure = Read-Host -Prompt $Prompt -AsSecureString
-    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+# config.h stores secrets in plain text, so they have to be decoded at the end.
+function ConvertTo-PlainText([SecureString]$Secure) {
+    if (-not $Secure) { return '' }
+    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Secure)
     try { return [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) }
     finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
+}
+
+function Read-Secret([string]$Prompt) {
+    return ConvertTo-PlainText (Read-Host -Prompt $Prompt -AsSecureString)
 }
 
 # Parameter > detected > existing value > prompt
@@ -169,8 +190,11 @@ if (-not [System.Net.IPAddress]::TryParse($ip, [ref]$parsedIp)) { throw "Invalid
 
 # ---------------------------------------------------------------------------
 Write-Step 'Wi-Fi (2.4 GHz)'
-$ssid = Resolve-Setting 'Wi-Fi name' $WifiSsid $null (Get-Define $text 'WIFI_SSID') -Suggestion (Get-CurrentWifiSsid)
-$wifiPass = Resolve-Setting 'Wi-Fi password' $WifiPassword $null (Get-Define $text 'WIFI_PASSWORD') -Secret
+$currentSsid = Get-Define $text 'WIFI_SSID'
+$ssid = Resolve-Setting 'Wi-Fi name' $WifiSsid $null $currentSsid -Suggestion (Get-CurrentWifiSsid)
+# A different network needs its own password, so don't reuse the stored one.
+$currentWifiPass = if ($ssid -eq $currentSsid) { Get-Define $text 'WIFI_PASSWORD' } else { '' }
+$wifiPass = Resolve-Setting 'Wi-Fi password' (ConvertTo-PlainText $WifiPassword) $null $currentWifiPass -Secret
 Write-Ok "Wi-Fi: $ssid"
 
 # ---------------------------------------------------------------------------
@@ -203,22 +227,25 @@ else {
 
 # ---------------------------------------------------------------------------
 Write-Step 'Web UI'
-$web = $WebPassword
-if (-not $web) { $web = Get-Define $text 'WEB_PASSWORD' }
-if (-not $web -and -not $PSBoundParameters.ContainsKey('WebPassword')) {
-    $web = Read-Secret 'Web UI password (leave empty to disable the web UI)'
+$web = ConvertTo-PlainText $WebPassword
+if ($DisableWebUi) {
+    $web = ''
+}
+elseif (-not $web) {
+    if (-not $ChangeWebPassword) { $web = Get-Define $text 'WEB_PASSWORD' }
+    if (-not $web) { $web = Read-Secret 'Web UI password (leave empty to disable the web UI)' }
 }
 if ($web) { Write-Ok 'Web UI enabled.' } else { Write-Warn 'Web UI disabled (no password).' }
 
 # ---------------------------------------------------------------------------
-$text = Set-Define $text 'WIFI_SSID' $ssid
-$text = Set-Define $text 'WIFI_PASSWORD' $wifiPass
-$text = Set-Define $text 'BOT_TOKEN' $token
-$text = Set-Define $text 'ALLOWED_CHAT_ID' $chat
-$text = Set-Define $text 'PC_MAC' (Format-Mac $mac)
-$text = Set-Define $text 'PC_IP_ADDRESS' $ip
-$text = Set-Define $text 'AGENT_TOKEN' $agent
-$text = Set-Define $text 'WEB_PASSWORD' $web
+$text = Edit-Define $text 'WIFI_SSID' $ssid
+$text = Edit-Define $text 'WIFI_PASSWORD' $wifiPass
+$text = Edit-Define $text 'BOT_TOKEN' $token
+$text = Edit-Define $text 'ALLOWED_CHAT_ID' $chat
+$text = Edit-Define $text 'PC_MAC' (Format-Mac $mac)
+$text = Edit-Define $text 'PC_IP_ADDRESS' $ip
+$text = Edit-Define $text 'AGENT_TOKEN' $agent
+$text = Edit-Define $text 'WEB_PASSWORD' $web
 
 [IO.File]::WriteAllText($OutputPath, $text, (New-Object Text.UTF8Encoding $false))
 

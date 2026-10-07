@@ -178,12 +178,14 @@ Do it **away from home**, or with your phone on **mobile data**:
 
 ## All the scripts
 
+Want to know exactly what a script changes on your PC before running it? See the [Scripts reference](scripts-reference.md): every change, every internet address contacted, and how to undo it.
+
 | Script | Phase | Admin | What it configures |
 |---|---|---|---|
 | `Enable-WakeOnLan.ps1` | 1 | Yes (`-CheckOnly`: no) | Network adapter wake settings, Fast Startup |
 | `Send-MagicPacket.ps1` | 1 | No | Test: wakes a PC from another Windows PC |
 | `Install-RemoteAccess.ps1` | 2 | Yes | Tailscale, Remote Desktop, password sign-in |
-| `Set-AutoSleep.ps1` | 2 | Yes | Sleep after N minutes of inactivity |
+| `Set-AutoSleep.ps1` | 2 | No | Sleep after N minutes of inactivity |
 | `Install-Agent.ps1` | 3, 6 | Yes | PC agent, its firewall rule and startup task |
 | `Uninstall-Agent.ps1` | — | Yes | Removes the PC agent |
 | `Install-DevTools.ps1` | 4 | No | Git, Arduino IDE/CLI, ESP32 package, libraries |

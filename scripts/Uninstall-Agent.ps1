@@ -4,6 +4,12 @@
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\scripts\Uninstall-Agent.ps1
+
+.NOTES
+    CHANGES MADE TO THIS PC: deletes the "Remote PC Wake Agent" task, the RemotePcWakeAgent
+      firewall rule and C:\ProgramData\RemotePcWake\.
+    NETWORK ACCESS: none.
+    Full reference: docs/scripts-reference.md
 #>
 #Requires -RunAsAdministrator
 $ErrorActionPreference = 'Stop'

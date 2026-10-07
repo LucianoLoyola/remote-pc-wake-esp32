@@ -28,6 +28,20 @@
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\scripts\Enable-WakeOnLan.ps1 -CheckOnly
+
+.NOTES
+    CHANGES MADE TO THIS PC (none with -CheckOnly), on the selected wired adapter only:
+      - Advanced properties, if the driver has them: Wake on Magic Packet on, Wake on pattern off,
+        Shutdown Wake-On-Lan on, Enable PME on, Energy-Efficient Ethernet / Advanced EEE / Green Ethernet off
+      - Power management: wake on magic packet on, wake on pattern off
+      - Registry: adapter key under HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-...}: PnPCapabilities = 24
+      - powercfg /deviceenablewake "<adapter>"
+      - Registry: HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power: HiberbootEnabled = 0
+      - Restarts the adapter if a setting changed (network drops for a few seconds)
+    NETWORK ACCESS: none.
+    UNDO: Device Manager (adapter Advanced / Power Management tabs), HiberbootEnabled = 1,
+      powercfg /devicedisablewake "<adapter>".
+    Full reference: docs/scripts-reference.md
 #>
 [CmdletBinding()]
 param(

@@ -11,6 +11,13 @@
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\scripts\Set-AutoSleep.ps1 -Minutes 60
+
+.NOTES
+    CHANGES MADE TO THIS PC: sleep timeout of the active power plan when plugged in
+      (powercfg /change standby-timeout-ac).
+    NETWORK ACCESS: none.
+    UNDO: run again with the previous value, or Settings > System > Power > Screen and sleep.
+    Full reference: docs/scripts-reference.md
 #>
 [CmdletBinding()]
 param(
