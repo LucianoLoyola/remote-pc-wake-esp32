@@ -12,10 +12,10 @@ The agent is a small PowerShell service that runs in the background on the targe
 
 | Feature | Telegram | Web UI |
 |---|---|---|
-| Shut down (now or scheduled) | `/shutdown`, `/shutdown 30` | ⏻ Shut down |
-| Restart (now or scheduled) | `/restart`, `/restart 10` | 🔄 Restart |
-| Sleep | `/sleep` | 💤 Sleep |
-| Lock the screen | `/lock` | 🔒 Lock |
+| Shut down (now or scheduled) | `/shutdown`, `/shutdown 30` | Shut down |
+| Restart (now or scheduled) | `/restart`, `/restart 10` | Restart |
+| Sleep | `/sleep` | Sleep |
+| Lock the screen | `/lock` | Lock |
 | Cancel a scheduled shutdown/restart | `/cancel` | Cancel |
 | Stats: CPU, RAM, disks, GPU (NVIDIA), uptime, signed-in user | `/status` | Status panel |
 | Warnings: disk almost full, Windows Update restart pending | Automatic alerts | Status panel |

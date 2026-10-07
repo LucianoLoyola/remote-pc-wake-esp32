@@ -5,12 +5,12 @@
 No port forwarding, no public IP, no always-on PC. It works behind CGNAT.
 
 ```
-                        ┌──────────────────── your home network ────────────────────┐
- 📱 Phone ── /wake ──►  Telegram  ◄── polls ── ESP32 ── magic packet ──────────► 🖥️ PC powers on
-          ◄── alerts ──                         │  └── shutdown / sleep / stats ──► PC agent
-                                          🌐 web UI (LAN)
- 📱 Phone / 💻 Laptop ════════════ Tailscale (encrypted) ═══════════════════════► Remote Desktop
-                        └────────────────────────────────────────────────────────────┘
+ Phone ── /wake ──► Telegram ◄── polls ── ESP32 ── magic packet ──► PC powers on
+       ◄─ alerts ──                        │
+                                           ├── shutdown / sleep / stats ──► PC agent
+                                           └── web UI (home network only)
+
+ Phone / Laptop ══════ Tailscale (encrypted) ══════► Remote Desktop to the PC
 ```
 
 ## Why
@@ -22,13 +22,13 @@ No port forwarding, no public IP, no always-on PC. It works behind CGNAT.
 
 ## Features
 
-- ⚡ **Wake** the PC with Wake-on-LAN and get notified when it's ready
-- ⏻ **Shut down, restart, sleep or lock** it, now or on a schedule (with the PC agent)
-- 📊 **Status**: CPU, RAM, disks, NVIDIA GPU, uptime, signed-in user
-- 🔔 **Alerts**: power outage recovery, PC turned on/off unexpectedly, PC agent down, disk almost full, Windows Update restart pending
-- 🎛️ **Telegram buttons** for every action, from anywhere
-- 🌐 **Web UI** on your home network (`http://remote-pc-wake.local`)
-- 🖥️ **Remote Desktop over Tailscale**, with a one-command setup script
+- **Wake** the PC with Wake-on-LAN and get notified when it's ready
+- **Shut down, restart, sleep or lock** it, now or on a schedule (with the PC agent)
+- **Status**: CPU, RAM, disks, NVIDIA GPU, uptime, signed-in user
+- **Alerts**: power outage recovery, PC turned on/off unexpectedly, PC agent down, disk almost full, Windows Update restart pending
+- **Telegram buttons** for every action, from anywhere
+- **Web UI** on your home network (`http://remote-pc-wake.local`)
+- **Remote Desktop over Tailscale**, with a one-command setup script
 
 ## What you can do with it
 
@@ -63,7 +63,7 @@ Only your Telegram account can send commands. Power actions, stats and warnings 
 
 ## Setup
 
-👉 **Start here: [Getting started — complete onboarding](docs/00-getting-started.md).** It walks through the whole process in the best order, with a checkpoint after each phase.
+**Start here: [Getting started — complete onboarding](docs/00-getting-started.md).** It walks through the whole process in the best order, with a checkpoint after each phase.
 
 The detailed runbooks it links to:
 

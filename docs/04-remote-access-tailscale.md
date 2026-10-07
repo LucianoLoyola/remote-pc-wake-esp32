@@ -133,7 +133,7 @@ Check that your PC appears in the device list in the Tailscale app.
 
 ### Connect
 
-1. `/wake` in Telegram and wait for "✅ The PC is online".
+1. `/wake` in Telegram and wait for "The PC is online".
 2. Make sure Tailscale is **on** in your device.
 3. In the Remote Desktop app, add a PC with:
    - **PC name:** the Tailscale name (e.g. `my-desktop`) or its `100.x.y.z` IP

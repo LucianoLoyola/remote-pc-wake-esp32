@@ -11,9 +11,9 @@ Once everything is set up (Runbooks 01–05), this is how you use it.
 Send `/menu` (or any unknown text) to get buttons for every action:
 
 ```
-[ ⚡ Wake ]     [ 📊 Status ]
-[ 🔒 Lock ]     [ 💤 Sleep ]
-[ 🔄 Restart ]  [ ⏻ Shut down ]
+[ Wake ]     [ Status ]
+[ Lock ]     [ Sleep ]
+[ Restart ]  [ Shut down ]
 ```
 
 **Shut down** and **Restart** ask for confirmation. Shut down also offers *Now*, *In 30 min* and *In 1 h*.
@@ -48,7 +48,7 @@ It shows:
 - Buttons: Wake, Lock, Sleep, Restart, Shut down (now or scheduled), Cancel
 - ESP32 info: firmware version, uptime and Wi-Fi signal
 
-It refreshes every 10 seconds. Every action taken from the web UI is also reported in Telegram (🌐 Web UI: ...), so you have a log of what was done.
+It refreshes every 10 seconds. Every action taken from the web UI is also reported in Telegram (Web UI: ...), so you have a log of what was done.
 
 > **Enable it** by setting `WEB_PASSWORD` in `config.h`. It stays disabled while the password is empty.
 >
@@ -84,17 +84,17 @@ The ESP32 checks the PC every `MONITOR_INTERVAL_SECONDS` (30 s) and sends you a 
 
 | Message | When | Setting |
 |---|---|---|
-| 🤖 ESP32 online | The ESP32 started, e.g. **power came back after an outage** | Always on |
-| ✅ The PC is online (took N s) | After `/wake` | Always on |
-| ⏻ The PC has shut down / 💤 The PC is asleep | After `/shutdown` / `/sleep` | Always on |
-| 🔄 The PC restarted and is back online | After `/restart` | Always on |
-| 🚨 The PC was turned on, but not from the bot | Someone (or something) turned it on | `NOTIFY_UNEXPECTED_POWER_ON` |
-| ⚠️ The PC went offline, but not from the bot | Shut down at the PC, crash, power loss, or network cable unplugged | `NOTIFY_UNEXPECTED_POWER_OFF` |
-| ⚠️ The PC is on, but the agent is not responding | Agent stopped, or the token is wrong | Always on (with agent) |
-| ⚠️ Disk C: is 93% full | A disk is fuller than `DiskWarningPercent` (agent config) | `NOTIFY_AGENT_WARNINGS` |
-| ⚠️ Windows Update needs a restart | Windows is waiting to restart for updates | `NOTIFY_AGENT_WARNINGS` |
-| ⚠️ The PC did not come online / is still on | A requested power change didn't happen in time | Always on |
-| 🌐 Web UI: ... | An action was taken from the web UI | Always on |
+| ESP32 online | The ESP32 started, e.g. **power came back after an outage** | Always on |
+| The PC is online (took N s) | After `/wake` | Always on |
+| The PC has shut down / The PC is asleep | After `/shutdown` / `/sleep` | Always on |
+| The PC restarted and is back online | After `/restart` | Always on |
+| The PC was turned on, but not from the bot | Someone (or something) turned it on | `NOTIFY_UNEXPECTED_POWER_ON` |
+| The PC went offline, but not from the bot | Shut down at the PC, crash, power loss, or network cable unplugged | `NOTIFY_UNEXPECTED_POWER_OFF` |
+| The PC is on, but the agent is not responding | Agent stopped, or the token is wrong | Always on (with agent) |
+| Disk C: is 93% full | A disk is fuller than `DiskWarningPercent` (agent config) | `NOTIFY_AGENT_WARNINGS` |
+| Windows Update needs a restart | Windows is waiting to restart for updates | `NOTIFY_AGENT_WARNINGS` |
+| The PC did not come online / is still on | A requested power change didn't happen in time | Always on |
+| Web UI: ... | An action was taken from the web UI | Always on |
 
 To avoid false alarms, a state change must be confirmed by two consecutive checks (four for "agent not responding"). Each disk or Update warning is sent once per power-on.
 
@@ -102,8 +102,8 @@ To avoid false alarms, a state change must be confirmed by two consecutive check
 
 ## Typical session
 
-1. **`/wake`** → "Magic packet sent…" → about 1 minute later "✅ The PC is online".
+1. **`/wake`** → "Magic packet sent…" → about 1 minute later "The PC is online".
 2. Turn on **Tailscale** on your laptop/phone and connect with **Remote Desktop** to the PC ([Runbook 04](04-remote-access-tailscale.md)).
 3. Work.
 4. Disconnect and **`/shutdown`** → *Now*, or **`/shutdown 60`** if something is still running.
-5. "⏻ The PC has shut down."
+5. "The PC has shut down."

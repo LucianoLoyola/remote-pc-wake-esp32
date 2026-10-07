@@ -89,9 +89,9 @@ Write down:
 
 1. Open **Device Manager** (`devmgmt.msc`) → **Network adapters** → double-click your Ethernet adapter.
 2. **Power Management** tab:
-   - ☑ Allow this device to wake the computer
-   - ☑ Only allow a magic packet to wake the computer
-   - ☐ Allow the computer to turn off this device to save power (unchecking it is recommended, since it can cause issues on some adapters)
+   - **Checked:** Allow this device to wake the computer
+   - **Checked:** Only allow a magic packet to wake the computer
+   - **Unchecked:** Allow the computer to turn off this device to save power (unchecking it is recommended, since it can cause issues on some adapters)
 3. **Advanced** tab. Set the following if present (names vary by vendor):
 
 | Property | Value | Typical vendor |

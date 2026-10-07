@@ -18,7 +18,7 @@ This runbook creates the Telegram bot, configures and uploads the firmware, and 
 3. Choose a display name (e.g. `My PC Waker`) and a username ending in `bot` (e.g. `my_pc_waker_bot`).
 4. BotFather replies with a **token** like `123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ`.
 
-> 🔒 The token gives full control of the bot. Don't share it or commit it to Git. If it leaks, send `/revoke` to BotFather to get a new one.
+> The token gives full control of the bot. Don't share it or commit it to Git. If it leaks, send `/revoke` to BotFather to get a new one.
 
 ## Step 2 — Get your Telegram user ID
 
@@ -77,7 +77,7 @@ Search for your bot's username in Telegram, open the chat and press **Start**. A
    Connecting to Wi-Fi....
    Connected. IP: 192.168.1.50
    ```
-5. In Telegram, the bot sends **🤖 ESP32 online (v1.1.0). 🔴 PC is off** (or 🟢 on) with action buttons. If `WEB_PASSWORD` is set, the message also includes the web UI address.
+5. In Telegram, the bot sends **ESP32 online (v1.1.0). PC is off** (or on) with action buttons. If `WEB_PASSWORD` is set, the message also includes the web UI address.
 
 ## Step 6 — Test it
 
@@ -85,13 +85,13 @@ Search for your bot's username in Telegram, open the chat and press **Start**. A
 
 With the PC **on**:
 
-- `/status` → `🟢 PC is on`
+- `/status` → `PC is on`
 - `/wake` → `The PC is already on.`
 
 Shut the PC down, wait about 30 seconds, then:
 
-- `/status` → `🔴 PC is off`
-- `/wake` → `Magic packet sent...` and then `✅ The PC is online (took N s).`
+- `/status` → `PC is off`
+- `/wake` → `Magic packet sent...` and then `The PC is online (took N s).`
 
 > The "online" message appears when the PC answers on `PC_CHECK_PORT`, which only happens once Windows has finished booting.
 
@@ -115,7 +115,7 @@ Shut the PC down, wait about 30 seconds, then:
 
 | Situation | Behavior |
 |---|---|
-| ESP32 boots / recovers from a power outage | Sends "🤖 ESP32 online" (useful as a power-outage notification) |
+| ESP32 boots / recovers from a power outage | Sends "ESP32 online" (useful as a power-outage notification) |
 | Messages sent while the ESP32 was offline | **Discarded**, so an old `/wake` never turns the PC on unexpectedly |
 | Wi-Fi drops | Reconnects automatically; restarts itself if it can't connect within 30 s |
 | PC doesn't come online within `WAKE_TIMEOUT_SECONDS` | Sends a warning |
