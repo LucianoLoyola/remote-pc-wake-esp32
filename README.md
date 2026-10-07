@@ -27,6 +27,14 @@ No port forwarding, no public IP, no always-on PC. It works behind CGNAT.
 4. The ESP32 watches for the PC to come online and tells you when it's ready.
 5. You connect with Remote Desktop (or RustDesk/Parsec) over [Tailscale](https://tailscale.com).
 
+## What you can do with it
+
+- **Use your full desktop from anywhere** (laptop, tablet or phone) with Remote Desktop
+- **Grab a file you left at home**, or send one to the PC with Taildrop
+- **Use your PC's power from a weak laptop**: compile, render, run heavy software
+- **Play your PC games remotely** with Parsec or Moonlight
+- **Start a long task**, check on it later, and shut the PC down when it's done
+
 ## Bot commands
 
 | Command | Action |
@@ -51,9 +59,16 @@ Follow the runbooks in order:
 
 | # | Runbook | What you'll do |
 |---|---|---|
-| 01 | [PC setup: BIOS/UEFI and Windows](docs/01-pc-setup-bios-and-windows.md) | Enable Wake-on-LAN, disable Fast Startup, reserve an IP, install Tailscale, enable Remote Desktop |
+| 01 | [PC setup: BIOS/UEFI and Windows](docs/01-pc-setup-bios-and-windows.md) | Enable Wake-on-LAN, disable Fast Startup, reserve an IP |
 | 02 | [Development environment](docs/02-development-environment.md) | Install Arduino IDE, the ESP32 board package, drivers and libraries |
 | 03 | [Telegram bot, flashing and deployment](docs/03-telegram-bot-flash-and-deploy.md) | Create the bot, configure and upload the firmware, install the ESP32 next to your router |
+| 04 | [Remote access: Tailscale and Remote Desktop](docs/04-remote-access-tailscale.md) | Reach and control the PC from anywhere. One script does most of it. |
+
+Remote access setup on the PC, in one command (elevated PowerShell):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\Install-RemoteAccess.ps1
+```
 
 **Quick start** for people who've done this before:
 
@@ -71,12 +86,14 @@ arduino-cli upload  --fqbn esp32:esp32:esp32 -p COM3 .
 ├── docs/
 │   ├── 01-pc-setup-bios-and-windows.md
 │   ├── 02-development-environment.md
-│   └── 03-telegram-bot-flash-and-deploy.md
+│   ├── 03-telegram-bot-flash-and-deploy.md
+│   └── 04-remote-access-tailscale.md
 ├── firmware/
 │   └── remote-pc-wake/
 │       ├── remote-pc-wake.ino     # ESP32 firmware
 │       └── config.example.h       # copy to config.h (git-ignored)
 └── tools/
+    ├── Install-RemoteAccess.ps1   # set up Tailscale + Remote Desktop on the PC
     └── Send-MagicPacket.ps1       # test WoL from another Windows PC
 ```
 

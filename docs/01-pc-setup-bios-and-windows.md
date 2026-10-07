@@ -1,12 +1,10 @@
 # Runbook 01 — PC setup (BIOS/UEFI and Windows)
 
-This runbook prepares the **target PC** (the one you want to turn on and control remotely) so that:
+This runbook prepares the **target PC** (the one you want to turn on remotely) so that it can be powered on by a Wake-on-LAN (WoL) magic packet.
 
-1. It can be powered on by a Wake-on-LAN (WoL) magic packet.
-2. It is reachable from anywhere through [Tailscale](https://tailscale.com), without opening ports on your router.
-3. You can control it with Remote Desktop (or an alternative).
+Remote control once the PC is on is covered in [Runbook 04](04-remote-access-tailscale.md).
 
-**Estimated time:** 30–45 minutes.
+**Estimated time:** 20–30 minutes.
 
 ---
 
@@ -15,7 +13,7 @@ This runbook prepares the **target PC** (the one you want to turn on and control
 | Item | Notes |
 |---|---|
 | PC connected by **Ethernet cable** | Wake-on-LAN over Wi-Fi is almost never supported from the powered-off state. |
-| Windows 10 or 11 | **Pro, Enterprise or Education** for the built-in Remote Desktop host. On **Home**, use one of the [alternatives](#windows-home-alternatives). |
+| Windows 10 or 11 | Any edition |
 | Admin access to the PC | Needed for driver and power settings. |
 | Admin access to your router | Needed for the DHCP reservation. |
 | A second device on the same network | To test WoL locally before involving the ESP32. |
@@ -166,91 +164,9 @@ Also test waking from **Sleep** if you plan to use it. Once local WoL works, the
 
 ---
 
-## Part C — Remote access with Tailscale
+## Next step
 
-Tailscale creates a private, encrypted network between your devices. It works behind CGNAT and **doesn't require opening any ports** on your router.
-
-In this setup the PC is a **regular Tailscale node**. Only the PC is reachable, not the rest of your network, and it doesn't route anyone else's traffic.
-
-### C1. Install and sign in
-
-1. Download and install Tailscale from <https://tailscale.com/download/windows>, or:
-   ```powershell
-   winget install --id tailscale.tailscale -e
-   ```
-2. Click the Tailscale icon in the system tray → **Log in** and sign in (Google, Microsoft, GitHub, etc.).
-3. Install Tailscale on your phone/laptop and sign in with **the same account**.
-
-### C2. Keep the PC connected when nobody is logged in
-
-After a Wake-on-LAN boot, the PC sits at the login screen with no user signed in. By default Tailscale on Windows disconnects in that state.
-
-- Tailscale tray icon → **Preferences** → enable **Run unattended**.
-
-### C3. Disable key expiry for the PC
-
-Tailscale keys expire periodically (180 days by default) and require signing in again **on the PC**, which you can't do remotely.
-
-1. Open the admin console: <https://login.tailscale.com/admin/machines>
-2. Find the PC → **⋯** menu → **Disable key expiry**.
-
-### C4. Note the PC's Tailscale name
-
-In the admin console (or `tailscale status` on the PC) note the machine name and its `100.x.y.z` IP. With **MagicDNS** (enabled by default) you can connect by name, e.g. `my-desktop`.
-
----
-
-## Part D — Remote Desktop
-
-### D1. Enable Remote Desktop (Windows Pro/Enterprise/Education)
-
-1. **Settings → System → Remote Desktop** → turn **On** → **Confirm**.
-2. Keep **"Require devices to use Network Level Authentication"** enabled.
-
-PowerShell equivalent:
-
-```powershell
-Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name fDenyTSConnections -Value 0
-Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-```
-
-### D2. Microsoft account sign-in
-
-If you sign in to Windows with a **Microsoft account**, Remote Desktop needs the **account email and password**, not your PIN.
-
-If your account is set up as passwordless (Windows Hello only), Remote Desktop will reject your credentials. To fix it:
-
-1. **Settings → Accounts → Sign-in options** → turn **off** "For improved security, only allow Windows Hello sign-in for Microsoft accounts on this device".
-2. Sign out and sign in once **with your password** (not the PIN).
-
-### D3. Connect from anywhere
-
-1. Make sure Tailscale is connected on your phone/laptop.
-2. Use the **Windows App** (formerly *Microsoft Remote Desktop*) on Windows, macOS, iOS or Android, or `mstsc` on Windows.
-3. Connect to the PC's Tailscale name (`my-desktop`) or its `100.x.y.z` IP.
-
-> ⚠️ **Never** forward port 3389 on your router to expose Remote Desktop directly to the internet. It's constantly scanned and attacked. Always go through Tailscale.
-
-### Windows Home alternatives
-
-Windows Home can't host Remote Desktop sessions. Use one of these instead (all work over Tailscale or on their own):
-
-| Tool | Best for |
-|---|---|
-| [RustDesk](https://rustdesk.com) | Open source; can connect directly over the Tailscale IP |
-| [Parsec](https://parsec.app) | Low latency, gaming, multiple monitors |
-| [Chrome Remote Desktop](https://remotedesktop.google.com) | Simplest setup |
-
-Make sure the tool you pick is configured to **start with Windows and work at the login screen** (unattended access). Otherwise it won't be reachable after a WoL boot.
-
----
-
-## Part E — (Optional) Save power when you're done
-
-To let the PC turn itself off after you disconnect:
-
-- **Settings → System → Power & battery → Screen and sleep**: set the PC to **sleep after N minutes** when plugged in. You can wake it again with `/wake`.
-- Or shut it down from the remote session: **Start → Power → Shut down**, or `shutdown /s /t 0`.
+The PC can now be powered on remotely. To control it once it's on, continue with [Runbook 04 — Remote access with Tailscale and Remote Desktop](04-remote-access-tailscale.md).
 
 ---
 
@@ -262,8 +178,6 @@ To let the PC turn itself off after you disconnect:
 - [ ] Fast Startup disabled
 - [ ] DHCP reservation created; MAC and IP written down
 - [ ] Local WoL test from a second device works from **shutdown**
-- [ ] Tailscale installed, **Run unattended** on, **key expiry disabled**
-- [ ] Remote Desktop (or alternative) works over Tailscale from outside your home network (e.g. phone on mobile data)
 
 ---
 
@@ -276,5 +190,3 @@ To let the PC turn itself off after you disconnect:
 | WoL worked, then stopped after a Windows update | Windows Update replaced the network driver and reset its settings. Repeat B2, or install the driver from the motherboard vendor's website. |
 | WoL stops working after a power outage | Hardware limitation; see A4 |
 | Works locally but not with the ESP32 | ESP32 on a different subnet/VLAN or on a guest network. It must be on the same LAN as the PC. |
-| Remote Desktop "credentials did not work" | See D2 |
-| Can't reach the PC through Tailscale after a reboot | "Run unattended" not enabled (C2) |
