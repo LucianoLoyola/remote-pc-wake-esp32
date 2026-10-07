@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest an idea or improvement.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check the [roadmap](https://github.com/LucianoLoyola/remote-pc-wake-esp32#roadmap--pending) first: your idea may already be planned.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
+      placeholder: When I'm away, I'd like to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How you imagine it working (Telegram command, web UI, script...).
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - ESP32 firmware / Telegram bot
+        - Web UI
+        - PC agent
+        - Setup scripts
+        - Documentation
+        - Other
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to implement it myself (see CONTRIBUTING.md).

@@ -61,6 +61,7 @@ You can also pass values as parameters (`-WifiSsid`, `-BotToken`, `-ChatId`, `-P
 | To change | Run with |
 |---|---|
 | Wi-Fi network | `-WifiSsid "NewNetwork"` (asks for its password) |
+| Wi-Fi password only | `-ChangeWifiPassword` |
 | Bot token | `-BotToken "123:ABC..."` |
 | Web UI password | `-ChangeWebPassword` (asks for the new one) |
 | Disable the web UI | `-DisableWebUi` |
@@ -140,7 +141,7 @@ If it gets stuck on *Connecting...*, hold the **BOOT** button on the board and r
    Connecting to Wi-Fi....
    Connected. IP: 192.168.1.50
    ```
-5. In Telegram, the bot sends **ESP32 online (v1.2.1). PC is off** (or on) with action buttons. If `WEB_PASSWORD` is set, the message also includes the web UI address.
+5. In Telegram, the bot sends **ESP32 online (vX.Y.Z). PC is off** (or on) with action buttons. If `WEB_PASSWORD` is set, the message also includes the web UI address.
 
 ## Step 6 — Test it
 

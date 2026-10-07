@@ -1,0 +1,77 @@
+name: Hardware report
+description: Tell us whether it works on your board, motherboard and router.
+title: "[Hardware] "
+labels: [hardware-report]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Reports like this help other people know which hardware works, so they're very welcome, especially when everything works.
+
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Everything works
+        - Works with some issues (describe below)
+        - Doesn't work (describe below)
+    validations:
+      required: true
+
+  - type: input
+    id: firmware-version
+    attributes:
+      label: Firmware version
+      placeholder: v1.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: esp32-board
+    attributes:
+      label: ESP32 board
+      description: Model and USB-to-serial chip.
+      placeholder: ESP32 DevKit V1 (CP2102)
+    validations:
+      required: true
+
+  - type: input
+    id: motherboard
+    attributes:
+      label: Motherboard and network adapter
+      placeholder: ASRock B650M-HDV/M.2, Realtek 2.5GbE
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows edition and version
+      placeholder: Windows 11 Pro 24H2
+
+  - type: input
+    id: router
+    attributes:
+      label: Router and internet provider
+      placeholder: Movistar GPT-2541GNAC (Argentina)
+
+  - type: checkboxes
+    id: features
+    attributes:
+      label: What did you test?
+      options:
+        - label: Wake from shutdown (/wake)
+        - label: Wake from sleep
+        - label: Shutdown / restart / sleep / lock (PC agent)
+        - label: Notifications
+        - label: Web UI
+        - label: Remote Desktop over Tailscale
+        - label: DHCP reservation in the router
+        - label: Fixed addresses (Set-StaticIp.ps1 / -Esp32StaticIp)
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: BIOS option names on your motherboard, workarounds you needed, anything that would help others with the same hardware.

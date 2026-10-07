@@ -76,7 +76,7 @@
 #include <ArduinoJson.h>
 #include "web_ui.h"
 
-#define FIRMWARE_VERSION "1.2.1"
+#define FIRMWARE_VERSION "1.1.0"
 
 const unsigned long POLL_INTERVAL_MS = POLL_INTERVAL_SECONDS * 1000UL;
 const unsigned long MONITOR_INTERVAL_MS = MONITOR_INTERVAL_SECONDS * 1000UL;

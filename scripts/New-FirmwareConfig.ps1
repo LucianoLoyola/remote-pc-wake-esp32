@@ -17,6 +17,8 @@
 .PARAMETER WifiPassword
     Wi-Fi password (SecureString). Asked for securely when config.h has none
     or when -WifiSsid changes the network.
+.PARAMETER ChangeWifiPassword
+    Ask for a new Wi-Fi password even if the network name didn't change.
 .PARAMETER BotToken
     Telegram bot token from @BotFather.
 .PARAMETER ChatId
@@ -66,6 +68,7 @@
 param(
     [string]$WifiSsid,
     [SecureString]$WifiPassword,
+    [switch]$ChangeWifiPassword,
     [string]$BotToken,
     [string]$ChatId,
     [string]$PcMac,
@@ -209,7 +212,7 @@ Write-Step 'Wi-Fi (2.4 GHz)'
 $currentSsid = Get-Define $text 'WIFI_SSID'
 $ssid = Resolve-Setting 'Wi-Fi name' $WifiSsid $null $currentSsid -Suggestion (Get-CurrentWifiSsid)
 # A different network needs its own password, so don't reuse the stored one.
-$currentWifiPass = if ($ssid -eq $currentSsid) { Get-Define $text 'WIFI_PASSWORD' } else { '' }
+$currentWifiPass = if ($ssid -eq $currentSsid -and -not $ChangeWifiPassword) { Get-Define $text 'WIFI_PASSWORD' } else { '' }
 $wifiPass = Resolve-Setting 'Wi-Fi password' (ConvertTo-PlainText $WifiPassword) $null $currentWifiPass -Secret
 Write-Ok "Wi-Fi: $ssid"
 

@@ -1,0 +1,94 @@
+name: Bug report
+description: Something doesn't work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Before you start:
+        - Check the troubleshooting section of the runbook for the step that fails.
+        - **Remove secrets** from anything you paste: Wi-Fi password, bot token, agent token, Telegram ID.
+        - Security problems go through the [security policy](https://github.com/LucianoLoyola/remote-pc-wake-esp32/security/policy), not here.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Wake-on-LAN (the PC doesn't turn on)
+        - Telegram bot / ESP32 firmware
+        - Web UI
+        - PC agent (shutdown, restart, sleep, lock, stats)
+        - Notifications
+        - Setup scripts
+        - Remote access (Tailscale / Remote Desktop)
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: |
+        1. Sent /wake
+        2. Expected the PC to turn on
+        3. Got "Magic packet sent" but the PC stayed off
+    validations:
+      required: true
+
+  - type: input
+    id: firmware-version
+    attributes:
+      label: Firmware version
+      description: Shown in the "ESP32 online (vX.Y.Z)" message and at the bottom of the web UI.
+      placeholder: v1.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: esp32-board
+    attributes:
+      label: ESP32 board
+      description: Model and USB-to-serial chip (CP2102, CH340...).
+      placeholder: ESP32 DevKit V1 (CP2102)
+
+  - type: input
+    id: pc
+    attributes:
+      label: PC
+      description: Windows edition and version, motherboard and network adapter.
+      placeholder: Windows 11 Pro 24H2, ASRock B650M-HDV/M.2, Realtek 2.5GbE
+
+  - type: input
+    id: router
+    attributes:
+      label: Router
+      description: Brand and model. Say if you used a DHCP reservation or fixed addresses (Set-StaticIp.ps1).
+      placeholder: Movistar GPT-2541GNAC, fixed addresses
+
+  - type: textarea
+    id: serial-output
+    attributes:
+      label: Serial monitor output
+      description: From `Install-Firmware.ps1 -Monitor` or the Arduino IDE Serial Monitor (115200 baud). Remove secrets.
+      render: text
+
+  - type: textarea
+    id: script-output
+    attributes:
+      label: Script output or Telegram messages
+      description: The full output of the failing script, or the bot's replies. Remove secrets.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I removed passwords and tokens from everything I pasted.
+          required: true
+        - label: I searched the existing issues.
+          required: true
