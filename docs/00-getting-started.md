@@ -38,7 +38,7 @@ This guide takes you from zero to a working setup, in the most efficient order. 
 | Telegram bot token | **You**, from @BotFather (Phase 5) |
 | Wi-Fi name and password | **You** (the name is suggested if the PC uses Wi-Fi) |
 | Web UI password | **You** choose it |
-| ESP32 IP | Shown in your router (Phase 6) |
+| ESP32 IP | Assigned by your router and shown in the serial monitor (Phase 5), or picked automatically with `-Esp32StaticIp auto` if your router can't reserve addresses |
 
 ### Get the repository and open PowerShell
 
@@ -138,11 +138,16 @@ Detailed runbook: [03 — Telegram bot, flashing and deployment](03-telegram-bot
    powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1
    ```
    It detects the PC's MAC and IP and the agent token, asks for the Wi-Fi, bot token and web UI password, and asks you to send any message to your bot to detect your Telegram ID. → [Step 4](03-telegram-bot-flash-and-deploy.md#step-4--configure-the-firmware)
+
+   **If your router can't reserve addresses** (you used `Set-StaticIp.ps1` in Phase 1), give the ESP32 a fixed address now, so you don't have to flash it again later. Add `-Esp32StaticIp auto`, which picks a free address. → [details](05-pc-agent.md#step-1--reserve-an-ip-for-the-esp32)
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp auto
+   ```
 3. Build and upload:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -Monitor
    ```
-   Press Ctrl+C to close the monitor once you see `Connected. IP: ...`. → [Step 5](03-telegram-bot-flash-and-deploy.md#step-5--upload-the-firmware)
+   Write down the address in `Connected. IP: ...` (you'll need it in Phase 6), then press Ctrl+C to close the monitor. → [Step 5](03-telegram-bot-flash-and-deploy.md#step-5--upload-the-firmware)
 
 **Checkpoint:** the bot sends **ESP32 online (v1.2.0)** with buttons, and `/status` shows the PC's CPU, RAM and disks.
 
@@ -152,14 +157,10 @@ Detailed runbook: [03 — Telegram bot, flashing and deployment](03-telegram-bot
 
 1. Unplug the ESP32 from the PC. Power it from the **router's USB port** or a phone charger near the router. → [Step 7](03-telegram-bot-flash-and-deploy.md#step-7--permanent-installation-next-to-the-router)
 2. **Router (manual):** reserve the ESP32's IP (it appears as `remote-pc-wake`). → [Step 1](05-pc-agent.md#step-1--reserve-an-ip-for-the-esp32)
-   Router can't reserve addresses? Give the ESP32 a fixed one and flash it again, with the ESP32 connected by USB:
+   Skip this if you gave the ESP32 a fixed address with `-Esp32StaticIp` in Phase 5.
+3. Restrict the agent to the ESP32's address (the one from Phase 5). The token is kept, so **no re-flash is needed**:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp auto
-   powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1
-   ```
-3. Restrict the agent to the ESP32. The token is kept, so **no re-flash is needed**:
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\Install-Agent.ps1 -Esp32Address 192.168.1.50
+   powershell -ExecutionPolicy Bypass -File .\scripts\Install-Agent.ps1 -Esp32Address 192.168.1.250
    ```
 4. Open **http://remote-pc-wake.local** on your phone (on home Wi-Fi) and sign in with `admin` and your web UI password. → [Web UI](usage.md#web-ui-home-network)
 
@@ -202,7 +203,7 @@ Want to know exactly what a script changes on your PC before running it? See the
 | `New-FirmwareConfig.ps1` | 5 | Yes, to read the agent token | `config.h` |
 | `Install-Firmware.ps1` | 5 | No | Builds and uploads the firmware |
 
-Steps that can't be scripted from Windows: BIOS settings, router DHCP reservations, creating the bot in @BotFather, and disabling Tailscale key expiry.
+Steps that can't be scripted from Windows: BIOS settings, router DHCP reservations (if your router can't do them, `Set-StaticIp.ps1` and `New-FirmwareConfig.ps1 -Esp32StaticIp auto` replace them), creating the bot in @BotFather, and disabling Tailscale key expiry.
 
 ---
 

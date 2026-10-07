@@ -52,7 +52,7 @@ It refreshes every 10 seconds. Every action taken from the web UI is also report
 
 > **Enable it** by setting `WEB_PASSWORD` in `config.h`. It stays disabled while the password is empty.
 >
-> `.local` names work on Windows 10+, macOS, iOS and most Linux systems. If it doesn't resolve (some Android versions), use the ESP32's IP address instead (reserve it in your router).
+> `.local` names work on Windows 10+, macOS, iOS and most Linux systems. If it doesn't resolve (some Android versions), use the ESP32's IP address instead (reserve it in your router, or give it a fixed one: [Runbook 05, Step 1](05-pc-agent.md#step-1--reserve-an-ip-for-the-esp32)).
 
 ### Why is the web UI only available at home?
 

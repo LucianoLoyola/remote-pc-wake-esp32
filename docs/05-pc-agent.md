@@ -55,7 +55,7 @@ So the firewall can allow **only** the ESP32:
 
 > You can skip this and allow your whole local network instead (the default), but restricting it to the ESP32 is safer.
 >
-> **Don't have the ESP32's IP yet?** Install the agent without `-Esp32Address` now. Once the ESP32 is online and its IP is reserved, run the installer again with `-Esp32Address`. It keeps the same token, so you don't need to re-flash the firmware.
+> **Don't have the ESP32's IP yet?** Install the agent without `-Esp32Address` now. Once the ESP32 is online and its IP is reserved (or fixed with `-Esp32StaticIp`), run the installer again with `-Esp32Address`. It keeps the same token, so you don't need to re-flash the firmware.
 
 ## Step 2 — Install the agent
 
@@ -238,7 +238,7 @@ Invoke-RestMethod http://localhost:8765/api/status -Headers @{ 'X-Agent-Token' =
 |---|---|
 | Bot says "agent is not responding (no response)" | Check that the task is running: Task Scheduler → **Remote PC Wake Agent**, or `Get-ScheduledTask 'Remote PC Wake Agent'`. Read `C:\ProgramData\RemotePcWake\agent.log`. |
 | "agent is not responding (wrong token)" | `AGENT_TOKEN` in `config.h` doesn't match `config.json`. Run the installer again (it prints the current token), update `config.h`, re-flash. |
-| Works from the PC (`localhost`) but not from the ESP32 | Firewall: the ESP32's IP changed and doesn't match `-Esp32Address`. Reserve its IP and run the installer again. |
+| Works from the PC (`localhost`) but not from the ESP32 | Firewall: the ESP32's IP changed and doesn't match `-Esp32Address`. Reserve its IP in the router, or give it a fixed one ([Step 1](#step-1--reserve-an-ip-for-the-esp32)), and run the installer again with the new address. |
 | `/lock` says "Could not lock the session" | Nobody is signed in at the PC's screen, so there's nothing to lock. |
 | `/sleep` does nothing | Sleep may be disabled by the hardware or a policy. Check with `powercfg /a`. |
 | Installer fails on "Testing the agent" | Another program may be using the port. Use `-Port 8766` and set `AGENT_PORT 8766` in `config.h`. |

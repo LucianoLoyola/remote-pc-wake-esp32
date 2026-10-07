@@ -200,5 +200,6 @@ All commands, the web UI and every notification are described in [Daily use](usa
 | Bot replies slowly | Expected: replies take up to `POLL_INTERVAL_SECONDS`. Lower it if you prefer faster responses. |
 | Connected to Wi-Fi but the bot never replies | Wrong `BOT_TOKEN`; you didn't press **Start** in the bot chat; or `ALLOWED_CHAT_ID` is wrong (the Serial Monitor shows `Ignored message from unauthorized chat ...` with your real ID). |
 | `/wake` is sent but the PC doesn't power on | Repeat the local test in Runbook 01 (B5). If that fails too, it's a BIOS/Windows issue. Also confirm the ESP32 and the PC are on the same subnet. |
-| `/status` always says "off" | The PC's firewall blocks `PC_CHECK_PORT`, Remote Desktop is disabled, or the IP changed (create the DHCP reservation). Try `PC_CHECK_PORT 445`. |
+| `/status` always says "off" | The PC's firewall blocks `PC_CHECK_PORT`, Remote Desktop is disabled, or the PC's IP changed (reserve it in the router, or fix it with `Set-StaticIp.ps1`, then run `New-FirmwareConfig.ps1` and flash again). Try `PC_CHECK_PORT 445`. |
+| ESP32 doesn't connect after setting `ESP32_STATIC_IP` | The address, gateway or subnet don't match your network. Run `New-FirmwareConfig.ps1 -Esp32StaticIp auto` on the target PC (it takes them from the PC), or `-Esp32UseDhcp` to go back, and flash again. |
 | PC wakes up but you can't connect remotely | Tailscale "Run unattended" or key expiry ([Runbook 04](04-remote-access-tailscale.md)). |

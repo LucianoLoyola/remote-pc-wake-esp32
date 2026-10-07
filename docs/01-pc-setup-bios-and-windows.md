@@ -15,7 +15,7 @@ Remote control once the PC is on is covered in [Runbook 04](04-remote-access-tai
 | PC connected by **Ethernet cable** | Wake-on-LAN over Wi-Fi is almost never supported from the powered-off state. |
 | Windows 10 or 11 | Any edition |
 | Admin access to the PC | Needed for driver and power settings. |
-| Admin access to your router | Needed for the DHCP reservation. |
+| Admin access to your router | For the DHCP reservation. If you don't have it, or the router doesn't allow it, the PC can use a fixed address instead ([B4](#if-your-router-cant-reserve-addresses)). |
 | A second device on the same network | To test WoL locally before involving the ESP32. |
 
 ---
@@ -156,7 +156,7 @@ Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\P
 
 ### B4. Reserve a fixed IP for the PC in your router
 
-The firmware's `/status` command checks the PC at a fixed IP address.
+The ESP32 finds the PC by its IP address (for `/status`, notifications and the agent), so the address must not change. Reserving it in the router is the best option. If your router can't do it, skip to [If your router can't reserve addresses](#if-your-router-cant-reserve-addresses).
 
 1. Find the current IP:
    ```powershell
@@ -230,7 +230,7 @@ The PC can now be powered on remotely. To control it once it's on, continue with
 - [ ] Adapter: "Allow this device to wake the computer" + "Only allow a magic packet" checked
 - [ ] Adapter: "Wake on Magic Packet" enabled
 - [ ] Fast Startup disabled
-- [ ] DHCP reservation created; MAC and IP written down
+- [ ] PC's IP fixed: DHCP reservation in the router, or `Set-StaticIp.ps1`; MAC and IP written down
 - [ ] Local WoL test from a second device works from **shutdown**
 
 ---
@@ -244,3 +244,6 @@ The PC can now be powered on remotely. To control it once it's on, continue with
 | WoL worked, then stopped after a Windows update | Windows Update replaced the network driver and reset its settings. Repeat B2, or install the driver from the motherboard vendor's website. |
 | WoL stops working after a power outage | Hardware limitation; see A4 |
 | Works locally but not with the ESP32 | ESP32 on a different subnet/VLAN or on a guest network. It must be on the same LAN as the PC. |
+| The ESP32 stopped finding the PC after days or weeks | The PC's IP changed. Fix it with a DHCP reservation (B4) or `Set-StaticIp.ps1`, then update `config.h` with `New-FirmwareConfig.ps1` and flash again. |
+| Router admin page keeps sending you back to the login | Some ISP routers lock their settings. Use a fixed address instead ([If your router can't reserve addresses](#if-your-router-cant-reserve-addresses)). |
+| `Set-StaticIp.ps1` restored DHCP by itself | The router didn't answer with the new address. Check that the address is in your network, or let the script suggest one (run it without `-IpAddress`). |

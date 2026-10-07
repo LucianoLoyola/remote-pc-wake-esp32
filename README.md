@@ -71,7 +71,7 @@ The detailed runbooks it links to:
 
 | # | Runbook | What you'll do |
 |---|---|---|
-| 01 | [PC setup: BIOS/UEFI and Windows](docs/01-pc-setup-bios-and-windows.md) | Enable Wake-on-LAN, disable Fast Startup, reserve an IP |
+| 01 | [PC setup: BIOS/UEFI and Windows](docs/01-pc-setup-bios-and-windows.md) | Enable Wake-on-LAN, disable Fast Startup, fix the PC's IP (router reservation or script) |
 | 02 | [Development environment](docs/02-development-environment.md) | Install Arduino IDE, the ESP32 board package, drivers and libraries |
 | 03 | [Telegram bot, flashing and deployment](docs/03-telegram-bot-flash-and-deploy.md) | Create the bot, configure and upload the firmware, install the ESP32 next to your router |
 | 04 | [Remote access: Tailscale and Remote Desktop](docs/04-remote-access-tailscale.md) | Reach and control the PC from anywhere. One script does most of it. |
@@ -82,7 +82,7 @@ Then see **[Daily use](docs/usage.md)** for commands, the web UI and notificatio
 Every Windows step is automated with a PowerShell script, and every runbook also documents the manual alternative. **Quick start** for people who've done this before. On the target PC, set the BIOS first, then run from an elevated PowerShell window in the repository folder:
 
 ```powershell
-# Wake-on-LAN (then reserve the PC's IP in the router)
+# Wake-on-LAN (then reserve the PC's IP in the router, or run Set-StaticIp.ps1 if it can't)
 powershell -ExecutionPolicy Bypass -File .\scripts\Enable-WakeOnLan.ps1
 # Tailscale + Remote Desktop
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-RemoteAccess.ps1 -RestrictRdpToTailscale
