@@ -38,7 +38,19 @@ Send `/menu` (or any unknown text) to get buttons for every action:
 
 ## Web UI (home network)
 
-Open **http://remote-pc-wake.local** (or the ESP32's IP) in any browser on your home network and sign in with `WEB_USERNAME` / `WEB_PASSWORD`.
+Open **http://remote-pc-wake.local** (or the ESP32's IP) in any browser on your home network and sign in:
+
+| Field | Value |
+|---|---|
+| User | `admin` (unless you changed `WEB_USERNAME` in `config.h`) |
+| Password | The one you chose when `New-FirmwareConfig.ps1` asked for the *Web UI password* (`WEB_PASSWORD` in `config.h`) |
+
+Forgot the password? Set a new one and flash the ESP32 again:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -ChangeWebPassword
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1
+```
 
 It shows:
 

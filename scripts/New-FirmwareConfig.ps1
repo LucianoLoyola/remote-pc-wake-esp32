@@ -296,7 +296,16 @@ elseif (-not $web) {
     if (-not $ChangeWebPassword) { $web = Get-Define $text 'WEB_PASSWORD' }
     if (-not $web) { $web = Read-Secret 'Web UI password (leave empty to disable the web UI)' }
 }
-if ($web) { Write-Ok 'Web UI enabled.' } else { Write-Warn 'Web UI disabled (no password).' }
+if ($web) {
+    $webUser = Get-Define $text 'WEB_USERNAME'
+    if (-not $webUser) { $webUser = 'admin' }
+    $webHost = Get-Define $text 'DEVICE_HOSTNAME'
+    if (-not $webHost) { $webHost = 'remote-pc-wake' }
+    Write-Ok "Web UI enabled: http://$webHost.local (home network), user '$webUser', the password you chose."
+}
+else {
+    Write-Warn 'Web UI disabled (no password).'
+}
 
 # ---------------------------------------------------------------------------
 $text = Edit-Define $text 'WIFI_SSID' $ssid
