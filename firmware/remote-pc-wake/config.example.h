@@ -8,6 +8,16 @@
 #define WIFI_SSID     "YOUR_WIFI_NAME"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 
+// ---------- Fixed IP for the ESP32 (optional) ----------
+// Leave ESP32_STATIC_IP empty to get an address from the router (DHCP), which is
+// the best option when you can reserve the address in the router.
+// If your router can't reserve addresses, set a fixed one here. Use an address
+// outside the range the router hands out, and that no other device uses.
+#define ESP32_STATIC_IP ""
+#define NETWORK_GATEWAY ""                // your router, e.g. "192.168.1.1"
+#define NETWORK_SUBNET  "255.255.255.0"
+#define NETWORK_DNS     ""                // empty = use the router
+
 // ---------- Telegram ----------
 // Bot token from @BotFather.
 #define BOT_TOKEN "123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
@@ -21,7 +31,8 @@
 // Both "AA:BB:CC:DD:EE:FF" and "AA-BB-CC-DD-EE-FF" are accepted.
 #define PC_MAC "AA:BB:CC:DD:EE:FF"
 
-// Fixed LAN IP of the PC (reserve it in your router's DHCP settings).
+// Fixed LAN IP of the PC: reserve it in your router's DHCP settings,
+// or set it on the PC with scripts\Set-StaticIp.ps1.
 #define PC_IP_ADDRESS "192.168.1.100"
 
 // TCP port used by /status to check whether the PC is on.

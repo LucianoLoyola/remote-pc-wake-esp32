@@ -53,6 +53,18 @@
 #ifndef WEB_PASSWORD
 #define WEB_PASSWORD ""
 #endif
+#ifndef ESP32_STATIC_IP
+#define ESP32_STATIC_IP ""
+#endif
+#ifndef NETWORK_GATEWAY
+#define NETWORK_GATEWAY ""
+#endif
+#ifndef NETWORK_SUBNET
+#define NETWORK_SUBNET "255.255.255.0"
+#endif
+#ifndef NETWORK_DNS
+#define NETWORK_DNS ""
+#endif
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
@@ -64,7 +76,7 @@
 #include <ArduinoJson.h>
 #include "web_ui.h"
 
-#define FIRMWARE_VERSION "1.1.0"
+#define FIRMWARE_VERSION "1.2.0"
 
 const unsigned long POLL_INTERVAL_MS = POLL_INTERVAL_SECONDS * 1000UL;
 const unsigned long MONITOR_INTERVAL_MS = MONITOR_INTERVAL_SECONDS * 1000UL;
@@ -667,10 +679,20 @@ void startWebServer() {
 
 // ---------- Setup and main loop ----------
 
+// Fixed IP settings from config.h; only used when ESP32_STATIC_IP is set.
+IPAddress staticIp, staticGateway, staticSubnet, staticDns;
+
+bool useStaticIp() {
+  return strlen(ESP32_STATIC_IP) > 0;
+}
+
 void connectWifi() {
   WiFi.persistent(false);  // don't write credentials to flash on every connect
   WiFi.mode(WIFI_STA);
   WiFi.setHostname(DEVICE_HOSTNAME);
+  if (useStaticIp()) {
+    WiFi.config(staticIp, staticGateway, staticSubnet, staticDns);
+  }
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   WiFi.setSleep(true);  // modem sleep: radio powers down between router beacons
   WiFi.setTxPower(WIFI_TX_POWER);
@@ -707,6 +729,16 @@ void setup() {
   }
   if (!pcIp.fromString(PC_IP_ADDRESS)) {
     haltWithError("Invalid PC_IP_ADDRESS in config.h.");
+  }
+  if (useStaticIp()) {
+    if (!staticIp.fromString(ESP32_STATIC_IP) || !staticGateway.fromString(NETWORK_GATEWAY) ||
+        !staticSubnet.fromString(NETWORK_SUBNET)) {
+      haltWithError("Invalid ESP32_STATIC_IP, NETWORK_GATEWAY or NETWORK_SUBNET in config.h.");
+    }
+    // Without a DNS server of its own, use the router, which forwards DNS queries.
+    if (!staticDns.fromString(NETWORK_DNS)) {
+      staticDns = staticGateway;
+    }
   }
 
   connectWifi();

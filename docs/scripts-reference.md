@@ -63,6 +63,7 @@ git log -1     # the commit ID must match the latest commit shown on GitHub
 | [`New-FirmwareConfig.ps1`](#new-firmwareconfigps1) | Only to read the agent token | Writes `config.h` inside the repository | Telegram (only to detect your ID) |
 | [`Install-Firmware.ps1`](#install-firmwareps1) | No | Nothing on the PC; writes the firmware to the ESP32 | None |
 | [`Send-MagicPacket.ps1`](#send-magicpacketps1) | No | Nothing | None (local network broadcast) |
+| [`Set-StaticIp.ps1`](#set-staticipps1) | Yes | Fixed IP address, gateway and DNS on the wired adapter | None (local network pings) |
 | [`tests/Invoke-ScriptAnalysis.ps1`](#testsinvoke-scriptanalysisps1) | No | Nothing | None |
 | [`agent/RemotePcWakeAgent.ps1`](#agentremotepcwakeagentps1) | Runs as SYSTEM | Runs in the background (see below) | None (only answers the ESP32) |
 
@@ -137,6 +138,25 @@ Puts the PC to sleep after N minutes of inactivity. [Runbook 04, Part F](04-remo
 
 ---
 
+## Set-StaticIp.ps1
+
+Gives the PC a fixed IP address, for routers that can't reserve one. [Runbook 01, B4](01-pc-setup-bios-and-windows.md#if-your-router-cant-reserve-addresses)
+
+**Changes made to this PC** (only on the selected wired adapter):
+
+| What | Change |
+|---|---|
+| IPv4 addressing | DHCP off; the fixed address you give, with the current subnet prefix and default gateway |
+| DNS servers | Set to the ones currently in use (or the gateway, if there are none) |
+| If the router is unreachable afterwards | Automatically switches back to DHCP |
+| With `-UseDhcp` | DHCP back on; removes the fixed address, its default route and the fixed DNS servers |
+
+**Reads:** the adapter's current address, gateway and DNS servers.
+**Network access:** pings the new address (to check that no other device uses it) and the gateway (to check the result). Local network only.
+**Undo:** `Set-StaticIp.ps1 -UseDhcp`, or **Settings → Network & internet → Ethernet → IP assignment → Automatic (DHCP)**.
+
+---
+
 ## Install-Agent.ps1
 
 Installs the PC agent. [Runbook 05](05-pc-agent.md)
@@ -198,7 +218,7 @@ Creates or updates the firmware's `config.h`. [Runbook 03, Step 4](03-telegram-b
 
 **Reads:** this PC's Ethernet adapter (MAC and IP), the agent token in `C:\ProgramData\RemotePcWake\config.json`, and the current Wi-Fi name (`netsh wlan show interfaces`).
 
-**Network access:** `api.telegram.org`, only if your Telegram ID isn't known yet. It calls `getMe` (to check the bot token) and `getUpdates` (to read the message you send to your own bot). It never sends messages.
+**Network access:** `api.telegram.org`, only if your Telegram ID isn't known yet. It calls `getMe` (to check the bot token) and `getUpdates` (to read the message you send to your own bot). It never sends messages. With `-Esp32StaticIp`, it also pings that address on the local network to warn you if it's already in use.
 
 **Undo:** delete `config.h`.
 

@@ -132,6 +132,7 @@ You shouldn't have to take our word for it, so the project makes the scripts eas
 │   ├── Enable-WakeOnLan.ps1       # network adapter + Fast Startup for Wake-on-LAN
 │   ├── Install-RemoteAccess.ps1   # Tailscale + Remote Desktop
 │   ├── Set-AutoSleep.ps1          # sleep after N minutes of inactivity
+│   ├── Set-StaticIp.ps1           # fixed IP for the PC (routers without DHCP reservation)
 │   ├── Install-Agent.ps1          # install/update the PC agent
 │   ├── Uninstall-Agent.ps1
 │   ├── Install-DevTools.ps1       # Arduino CLI/IDE, ESP32 package, libraries

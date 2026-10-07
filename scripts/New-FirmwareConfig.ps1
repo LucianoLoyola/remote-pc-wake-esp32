@@ -33,6 +33,11 @@
     Ask for a new web UI password even if one is already set.
 .PARAMETER DisableWebUi
     Remove the web UI password, which disables the web UI.
+.PARAMETER Esp32StaticIp
+    Fixed IP address for the ESP32, for routers that can't reserve one. The gateway and
+    subnet are taken from this PC's network settings.
+.PARAMETER Esp32UseDhcp
+    Remove the ESP32's fixed IP address: it gets one from the router again.
 .PARAMETER OutputPath
     Where to write config.h. Default: firmware\remote-pc-wake\config.h
 
@@ -43,11 +48,15 @@
     powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -WifiSsid "NewNetwork"
     Changes the Wi-Fi network; the script asks for its password.
 
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp 192.168.1.210
+    Gives the ESP32 a fixed IP address.
+
 .NOTES
     CHANGES MADE TO THIS PC: writes only firmware\remote-pc-wake\config.h in the repository
       (git-ignored; contains your secrets in plain text because the firmware needs them).
     NETWORK ACCESS: api.telegram.org (getMe, getUpdates), only to detect your Telegram ID.
-      It never sends messages.
+      It never sends messages. With -Esp32StaticIp, pings that address on the local network.
     UNDO: delete config.h.
     Full reference: docs/scripts-reference.md
 #>
@@ -63,6 +72,8 @@ param(
     [SecureString]$WebPassword,
     [switch]$ChangeWebPassword,
     [switch]$DisableWebUi,
+    [string]$Esp32StaticIp,
+    [switch]$Esp32UseDhcp,
     [string]$OutputPath
 )
 
@@ -91,8 +102,18 @@ function Get-Define([string]$Text, [string]$Key) {
 function Edit-Define([string]$Text, [string]$Key, [string]$Value) {
     $escaped = $Value.Replace('\', '\\').Replace('"', '\"')
     $pattern = "(?m)^(#define\s+$Key\s+)`"(?:[^`"\\]|\\.)*`""
-    if ($Text -notmatch $pattern) { throw "Setting $Key not found in the template." }
+    if ($Text -notmatch $pattern) {
+        # config.h created by an older version: add the setting at the end
+        return $Text.TrimEnd() + "`n#define $Key `"$escaped`"`n"
+    }
     return [regex]::Replace($Text, $pattern, { param($m) $m.Groups[1].Value + '"' + $escaped + '"' })
+}
+
+function ConvertTo-SubnetMask([int]$PrefixLength) {
+    $value = [uint32]([math]::Pow(2, 32) - [math]::Pow(2, 32 - $PrefixLength))
+    $bytes = [BitConverter]::GetBytes($value)
+    [Array]::Reverse($bytes)
+    return ([System.Net.IPAddress]$bytes).ToString()
 }
 
 function Test-Configured([string]$Value) {
@@ -198,6 +219,46 @@ $wifiPass = Resolve-Setting 'Wi-Fi password' (ConvertTo-PlainText $WifiPassword)
 Write-Ok "Wi-Fi: $ssid"
 
 # ---------------------------------------------------------------------------
+Write-Step 'ESP32 address'
+$espIp = Get-Define $text 'ESP32_STATIC_IP'
+$espGateway = Get-Define $text 'NETWORK_GATEWAY'
+$espSubnet = Get-Define $text 'NETWORK_SUBNET'
+if (-not $espSubnet) { $espSubnet = '255.255.255.0' }
+
+if ($Esp32UseDhcp) {
+    $espIp = ''
+    $espGateway = ''
+}
+elseif ($Esp32StaticIp) {
+    $parsedEspIp = $null
+    if (-not [System.Net.IPAddress]::TryParse($Esp32StaticIp, [ref]$parsedEspIp) -or $parsedEspIp.AddressFamily -ne 'InterNetwork') {
+        throw "Invalid ESP32 IP address: $Esp32StaticIp"
+    }
+    if ($Esp32StaticIp -eq $ip) { throw 'The ESP32 and the PC cannot use the same IP address.' }
+    try {
+        $netAdapter = Get-WakeAdapter
+        $netConfig = Get-NetIPConfiguration -InterfaceIndex $netAdapter.ifIndex
+        $espGateway = $netConfig.IPv4DefaultGateway.NextHop | Select-Object -First 1
+        $prefix = (Get-NetIPAddress -InterfaceIndex $netAdapter.ifIndex -AddressFamily IPv4 | Select-Object -First 1).PrefixLength
+        $espSubnet = ConvertTo-SubnetMask $prefix
+    }
+    catch {
+        Write-Warn "Could not read this PC's network settings."
+    }
+    if (-not $espGateway) { $espGateway = Read-Host -Prompt 'Router (gateway) IP address, e.g. 192.168.1.1' }
+    $espIp = $Esp32StaticIp
+    if (Test-Connection -ComputerName $espIp -Count 2 -Quiet -ErrorAction SilentlyContinue) {
+        Write-Warn "$espIp answers on the network. That's fine if it's the ESP32 itself; otherwise choose another address."
+    }
+}
+if ($espIp) {
+    Write-Ok "Fixed IP: $espIp (gateway $espGateway, subnet $espSubnet)"
+}
+else {
+    Write-Ok 'Automatic: the router assigns the address (DHCP).'
+}
+
+# ---------------------------------------------------------------------------
 Write-Step 'Telegram'
 $token = Resolve-Setting 'Bot token (from @BotFather)' $BotToken $null (Get-Define $text 'BOT_TOKEN') -Secret
 $currentChat = Get-Define $text 'ALLOWED_CHAT_ID'
@@ -244,6 +305,9 @@ $text = Edit-Define $text 'BOT_TOKEN' $token
 $text = Edit-Define $text 'ALLOWED_CHAT_ID' $chat
 $text = Edit-Define $text 'PC_MAC' (Format-Mac $mac)
 $text = Edit-Define $text 'PC_IP_ADDRESS' $ip
+$text = Edit-Define $text 'ESP32_STATIC_IP' $espIp
+$text = Edit-Define $text 'NETWORK_GATEWAY' $espGateway
+$text = Edit-Define $text 'NETWORK_SUBNET' $espSubnet
 $text = Edit-Define $text 'AGENT_TOKEN' $agent
 $text = Edit-Define $text 'WEB_PASSWORD' $web
 

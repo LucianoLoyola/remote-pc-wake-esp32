@@ -168,6 +168,22 @@ The firmware's `/status` command checks the PC at a fixed IP address.
 
 This IP goes into `PC_IP_ADDRESS` in `config.h`.
 
+#### If your router can't reserve addresses
+
+Some ISP routers don't offer DHCP reservations, or lock their settings. In that case, set a **fixed address on the PC itself**. Choose an address in the same network that the router doesn't hand out: high addresses such as `.200`–`.250` usually aren't (e.g. `192.168.1.211`).
+
+**Automatic** (elevated PowerShell):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Set-StaticIp.ps1 -IpAddress 192.168.1.211
+```
+
+The script checks that the address is free and in the right network, keeps your current gateway and DNS servers, and restores automatic addressing by itself if the router stops responding. To undo: `Set-StaticIp.ps1 -UseDhcp`.
+
+**Manual:** **Settings → Network & internet → Ethernet → IP assignment → Edit → Manual**, turn on **IPv4**, and enter the IP address, subnet mask (usually `255.255.255.0`), gateway (your router, e.g. `192.168.1.1`) and DNS servers. Check your current values first with `ipconfig /all`.
+
+The ESP32 can get a fixed address the same way, from its configuration: see [Runbook 05, Step 1](05-pc-agent.md#step-1--reserve-an-ip-for-the-esp32).
+
 ### B5. Test Wake-on-LAN locally (before using the ESP32)
 
 1. Shut down the PC with **Start → Power → Shut down**.

@@ -64,6 +64,8 @@ You can also pass values as parameters (`-WifiSsid`, `-BotToken`, `-ChatId`, `-P
 | Bot token | `-BotToken "123:ABC..."` |
 | Web UI password | `-ChangeWebPassword` (asks for the new one) |
 | Disable the web UI | `-DisableWebUi` |
+| Fixed IP for the ESP32 (router can't reserve one) | `-Esp32StaticIp 192.168.1.210` |
+| Back to automatic IP for the ESP32 | `-Esp32UseDhcp` |
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -WifiSsid "NewNetwork"
@@ -101,6 +103,7 @@ The settings in the tables below keep their defaults. Edit `config.h` by hand to
 |---|---|---|
 | `AGENT_TOKEN` / `AGENT_PORT` | empty / `8765` | Enables shutdown, restart, sleep, lock and PC stats. The agent installer prints both values ([Runbook 05](05-pc-agent.md)). Leave the token empty if you haven't installed the agent yet. |
 | `WEB_USERNAME` / `WEB_PASSWORD` | `admin` / empty | Web UI on your home network. **Disabled while the password is empty.** |
+| `ESP32_STATIC_IP` / `NETWORK_GATEWAY` / `NETWORK_SUBNET` / `NETWORK_DNS` | empty / empty / `255.255.255.0` / empty | Fixed IP for the ESP32, only if your router can't reserve one ([Runbook 05, Step 1](05-pc-agent.md#step-1--reserve-an-ip-for-the-esp32)). Empty = the router assigns it. `NETWORK_DNS` empty = use the router. |
 | `MONITOR_INTERVAL_SECONDS` | `30` | How often the ESP32 checks whether the PC is on (for notifications) |
 | `NOTIFY_UNEXPECTED_POWER_ON` / `_OFF` | `true` | Alert when the PC turns on or off without being asked through the bot |
 | `NOTIFY_AGENT_WARNINGS` | `true` | Forward agent warnings (disk almost full, Windows Update restart pending) |
@@ -137,7 +140,7 @@ If it gets stuck on *Connecting...*, hold the **BOOT** button on the board and r
    Connecting to Wi-Fi....
    Connected. IP: 192.168.1.50
    ```
-5. In Telegram, the bot sends **ESP32 online (v1.1.0). PC is off** (or on) with action buttons. If `WEB_PASSWORD` is set, the message also includes the web UI address.
+5. In Telegram, the bot sends **ESP32 online (v1.2.0). PC is off** (or on) with action buttons. If `WEB_PASSWORD` is set, the message also includes the web UI address.
 
 ## Step 6 — Test it
 

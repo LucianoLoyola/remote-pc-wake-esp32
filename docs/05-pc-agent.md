@@ -40,8 +40,18 @@ Everything else (wake, power-on/offline alerts) works **without** the agent.
 
 So the firewall can allow **only** the ESP32:
 
-1. Find the ESP32's IP: it's printed in the Serial Monitor at boot (`Connected. IP: ...`), or listed in your router's connected-devices page as `remote-pc-wake`.
+1. Find the ESP32's IP: it's printed in the Serial Monitor at boot (`Connected. IP: ...`), or listed in your router's connected-devices page as `remote-pc-wake`. With the web UI enabled, `ping remote-pc-wake.local` also shows it.
 2. In your router, create a **DHCP reservation** for it, like you did for the PC in [Runbook 01, B4](01-pc-setup-bios-and-windows.md#b4-reserve-a-fixed-ip-for-the-pc-in-your-router).
+
+**If your router can't reserve addresses**, give the ESP32 a fixed address in its configuration instead. Choose one outside the range the router hands out (e.g. `192.168.1.210`) and different from the PC's.
+
+- **Automatic**, on the target PC (it takes the gateway and subnet from the PC's network settings):
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp 192.168.1.210
+  powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1
+  ```
+  To go back to automatic addressing: `New-FirmwareConfig.ps1 -Esp32UseDhcp`, then flash again.
+- **Manual:** in `config.h`, set `ESP32_STATIC_IP`, `NETWORK_GATEWAY` (your router) and `NETWORK_SUBNET`, then flash again.
 
 > You can skip this and allow your whole local network instead (the default), but restricting it to the ESP32 is safer.
 >
