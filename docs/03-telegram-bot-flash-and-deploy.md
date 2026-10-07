@@ -64,7 +64,7 @@ You can also pass values as parameters (`-WifiSsid`, `-BotToken`, `-ChatId`, `-P
 | Bot token | `-BotToken "123:ABC..."` |
 | Web UI password | `-ChangeWebPassword` (asks for the new one) |
 | Disable the web UI | `-DisableWebUi` |
-| Fixed IP for the ESP32 (router can't reserve one) | `-Esp32StaticIp 192.168.1.210` |
+| Fixed IP for the ESP32 (router can't reserve one) | `-Esp32StaticIp auto` (picks a free one), or a specific address |
 | Back to automatic IP for the ESP32 | `-Esp32UseDhcp` |
 
 ```powershell

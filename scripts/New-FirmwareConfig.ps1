@@ -34,8 +34,9 @@
 .PARAMETER DisableWebUi
     Remove the web UI password, which disables the web UI.
 .PARAMETER Esp32StaticIp
-    Fixed IP address for the ESP32, for routers that can't reserve one. The gateway and
-    subnet are taken from this PC's network settings.
+    Fixed IP address for the ESP32, for routers that can't reserve one, or "auto" to pick
+    a free one near the top of your network. The gateway and subnet are taken from this
+    PC's network settings.
 .PARAMETER Esp32UseDhcp
     Remove the ESP32's fixed IP address: it gets one from the router again.
 .PARAMETER OutputPath
@@ -49,14 +50,15 @@
     Changes the Wi-Fi network; the script asks for its password.
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp 192.168.1.210
-    Gives the ESP32 a fixed IP address.
+    powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp auto
+    Gives the ESP32 a fixed IP address, choosing a free one automatically.
 
 .NOTES
     CHANGES MADE TO THIS PC: writes only firmware\remote-pc-wake\config.h in the repository
       (git-ignored; contains your secrets in plain text because the firmware needs them).
     NETWORK ACCESS: api.telegram.org (getMe, getUpdates), only to detect your Telegram ID.
-      It never sends messages. With -Esp32StaticIp, pings that address on the local network.
+      It never sends messages. With -Esp32StaticIp, pings addresses on the local network
+      (and reads the ARP table) to check or find a free one.
     UNDO: delete config.h.
     Full reference: docs/scripts-reference.md
 #>
@@ -107,13 +109,6 @@ function Edit-Define([string]$Text, [string]$Key, [string]$Value) {
         return $Text.TrimEnd() + "`n#define $Key `"$escaped`"`n"
     }
     return [regex]::Replace($Text, $pattern, { param($m) $m.Groups[1].Value + '"' + $escaped + '"' })
-}
-
-function ConvertTo-SubnetMask([int]$PrefixLength) {
-    $value = [uint32]([math]::Pow(2, 32) - [math]::Pow(2, 32 - $PrefixLength))
-    $bytes = [BitConverter]::GetBytes($value)
-    [Array]::Reverse($bytes)
-    return ([System.Net.IPAddress]$bytes).ToString()
 }
 
 function Test-Configured([string]$Value) {
@@ -230,25 +225,30 @@ if ($Esp32UseDhcp) {
     $espGateway = ''
 }
 elseif ($Esp32StaticIp) {
-    $parsedEspIp = $null
-    if (-not [System.Net.IPAddress]::TryParse($Esp32StaticIp, [ref]$parsedEspIp) -or $parsedEspIp.AddressFamily -ne 'InterNetwork') {
-        throw "Invalid ESP32 IP address: $Esp32StaticIp"
+    $lan = $null
+    try { $lan = Get-LanInterface (Get-WakeAdapter) } catch { Write-Verbose $_.Exception.Message }
+    if (-not $lan) {
+        throw "Could not read this PC's network settings. Run this script on the target PC, connected to the router."
     }
-    if ($Esp32StaticIp -eq $ip) { throw 'The ESP32 and the PC cannot use the same IP address.' }
-    try {
-        $netAdapter = Get-WakeAdapter
-        $netConfig = Get-NetIPConfiguration -InterfaceIndex $netAdapter.ifIndex
-        $espGateway = $netConfig.IPv4DefaultGateway.NextHop | Select-Object -First 1
-        $prefix = (Get-NetIPAddress -InterfaceIndex $netAdapter.ifIndex -AddressFamily IPv4 | Select-Object -First 1).PrefixLength
-        $espSubnet = ConvertTo-SubnetMask $prefix
+    $espGateway = $lan.Gateway
+    $espSubnet = ConvertTo-SubnetMask $lan.PrefixLength
+
+    if ($Esp32StaticIp -eq 'auto') {
+        Write-Info 'Looking for a free address near the top of your network...'
+        $espIp = Find-FreeIPv4Address $lan.Gateway $lan.PrefixLength @($ip)
+        if (-not $espIp) { throw 'No free address found near the top of the network. Pass one with -Esp32StaticIp.' }
     }
-    catch {
-        Write-Warn "Could not read this PC's network settings."
-    }
-    if (-not $espGateway) { $espGateway = Read-Host -Prompt 'Router (gateway) IP address, e.g. 192.168.1.1' }
-    $espIp = $Esp32StaticIp
-    if (Test-Connection -ComputerName $espIp -Count 2 -Quiet -ErrorAction SilentlyContinue) {
-        Write-Warn "$espIp answers on the network. That's fine if it's the ESP32 itself; otherwise choose another address."
+    else {
+        if (-not (Test-IPv4Address $Esp32StaticIp)) { throw "Invalid ESP32 IP address: $Esp32StaticIp" }
+        if (-not (Test-SameSubnet $Esp32StaticIp $lan.Gateway $lan.PrefixLength)) {
+            throw "$Esp32StaticIp is not in your network ($($lan.Gateway)/$($lan.PrefixLength))."
+        }
+        if ($Esp32StaticIp -eq $ip) { throw 'The ESP32 and the PC cannot use the same IP address.' }
+        if ($Esp32StaticIp -eq $lan.Gateway) { throw "$Esp32StaticIp is the router's own address." }
+        $espIp = $Esp32StaticIp
+        if (Test-IPv4InUse $espIp) {
+            Write-Warn "$espIp is in use on the network. That's fine if it's the ESP32 itself; otherwise choose another address."
+        }
     }
 }
 if ($espIp) {

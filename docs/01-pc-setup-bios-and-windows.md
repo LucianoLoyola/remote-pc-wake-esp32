@@ -170,17 +170,35 @@ This IP goes into `PC_IP_ADDRESS` in `config.h`.
 
 #### If your router can't reserve addresses
 
-Some ISP routers don't offer DHCP reservations, or lock their settings. In that case, set a **fixed address on the PC itself**. Choose an address in the same network that the router doesn't hand out: high addresses such as `.200`–`.250` usually aren't (e.g. `192.168.1.211`).
+Some ISP routers don't offer DHCP reservations, or lock their settings. In that case, set a **fixed address on the PC itself**. The address must be in your network and not handed out by the router; routers usually hand out addresses from the bottom of the range, so high ones (such as `.250` in a `192.168.1.x` network) are the safest choice.
 
 **Automatic** (elevated PowerShell):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\Set-StaticIp.ps1 -IpAddress 192.168.1.211
+powershell -ExecutionPolicy Bypass -File .\scripts\Set-StaticIp.ps1
 ```
 
-The script checks that the address is free and in the right network, keeps your current gateway and DNS servers, and restores automatic addressing by itself if the router stops responding. To undo: `Set-StaticIp.ps1 -UseDhcp`.
+The script:
+
+1. Finds the interface that holds the PC's address, including the Hyper-V `vEthernet` case (see the table below).
+2. Suggests a free address near the top of **your** network and asks you to confirm. To choose one yourself, add `-IpAddress 192.168.x.y`.
+3. Checks that the address is in your network and that no device uses it. Devices that block ping, like Windows PCs, are detected too.
+4. Keeps your current gateway and DNS servers.
+5. Restores automatic addressing by itself if the router stops responding.
+
+To undo: `Set-StaticIp.ps1 -UseDhcp`.
 
 **Manual:** **Settings → Network & internet → Ethernet → IP assignment → Edit → Manual**, turn on **IPv4**, and enter the IP address, subnet mask (usually `255.255.255.0`), gateway (your router, e.g. `192.168.1.1`) and DNS servers. Check your current values first with `ipconfig /all`.
+
+**Limitations.** A fixed address set on the device works on most home networks, but it's a fallback: a DHCP reservation in the router is always better.
+
+| Situation | What to do |
+|---|---|
+| The router hands out **every** address in the network (e.g. `.2`–`.254`) | There's no address the router will never use. The script checks the address is free *now*, but the router could give it to another device later. Use the highest free address and, if the ESP32 ever stops finding the PC, run the script again to pick another one. |
+| **Hyper-V** external virtual switch (also used by some WSL2 and Docker setups) | The address lives on a `vEthernet` adapter instead of the physical one. The script detects it and configures that adapter; Wake-on-LAN keeps using the physical one. |
+| **Modem and router are separate devices** (double NAT) | The PC and the ESP32 must be connected to the **same** device. Use addresses from that device's network. |
+| **Work or school PC** | IT policies may block network changes. Ask your administrator to reserve an address instead. |
+| The PC is a **laptop** that you also plug into other networks | The fixed address only works on your home network. Prefer a router reservation, or switch back with `-UseDhcp` before plugging into other networks. |
 
 The ESP32 can get a fixed address the same way, from its configuration: see [Runbook 05, Step 1](05-pc-agent.md#step-1--reserve-an-ip-for-the-esp32).
 

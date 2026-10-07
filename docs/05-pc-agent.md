@@ -43,11 +43,11 @@ So the firewall can allow **only** the ESP32:
 1. Find the ESP32's IP: it's printed in the Serial Monitor at boot (`Connected. IP: ...`), or listed in your router's connected-devices page as `remote-pc-wake`. With the web UI enabled, `ping remote-pc-wake.local` also shows it.
 2. In your router, create a **DHCP reservation** for it, like you did for the PC in [Runbook 01, B4](01-pc-setup-bios-and-windows.md#b4-reserve-a-fixed-ip-for-the-pc-in-your-router).
 
-**If your router can't reserve addresses**, give the ESP32 a fixed address in its configuration instead. Choose one outside the range the router hands out (e.g. `192.168.1.210`) and different from the PC's.
+**If your router can't reserve addresses**, give the ESP32 a fixed address in its configuration instead. It must be outside the range the router hands out and different from the PC's. The [limitations of fixed addresses](01-pc-setup-bios-and-windows.md#if-your-router-cant-reserve-addresses) apply here too.
 
-- **Automatic**, on the target PC (it takes the gateway and subnet from the PC's network settings):
+- **Automatic**, on the target PC. `auto` picks a free address near the top of your network, and the gateway and subnet are taken from the PC's network settings. You can also give a specific address instead of `auto`.
   ```powershell
-  powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp 192.168.1.210
+  powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp auto
   powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1
   ```
   To go back to automatic addressing: `New-FirmwareConfig.ps1 -Esp32UseDhcp`, then flash again.

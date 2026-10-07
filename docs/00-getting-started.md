@@ -63,9 +63,9 @@ Detailed runbook: [01 — PC setup: BIOS/UEFI and Windows](01-pc-setup-bios-and-
    ```
    It configures the network adapter and disables Fast Startup, then prints the PC's **MAC** and **IP**. → [Part B](01-pc-setup-bios-and-windows.md#part-b--windows)
 3. **Router (manual):** reserve that IP for that MAC (DHCP reservation). → [B4](01-pc-setup-bios-and-windows.md#b4-reserve-a-fixed-ip-for-the-pc-in-your-router)
-   Router can't reserve addresses? Give the PC a fixed one instead → [details](01-pc-setup-bios-and-windows.md#if-your-router-cant-reserve-addresses)
+   Router can't reserve addresses? Give the PC a fixed one instead (the script suggests a free address) → [details](01-pc-setup-bios-and-windows.md#if-your-router-cant-reserve-addresses)
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\Set-StaticIp.ps1 -IpAddress 192.168.1.211
+   powershell -ExecutionPolicy Bypass -File .\scripts\Set-StaticIp.ps1
    ```
 4. **Test:** shut the PC down and wake it from your phone with a "Wake On Lan" app. → [B5](01-pc-setup-bios-and-windows.md#b5-test-wake-on-lan-locally-before-using-the-esp32)
 
@@ -154,7 +154,7 @@ Detailed runbook: [03 — Telegram bot, flashing and deployment](03-telegram-bot
 2. **Router (manual):** reserve the ESP32's IP (it appears as `remote-pc-wake`). → [Step 1](05-pc-agent.md#step-1--reserve-an-ip-for-the-esp32)
    Router can't reserve addresses? Give the ESP32 a fixed one and flash it again, with the ESP32 connected by USB:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp 192.168.1.210
+   powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp auto
    powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1
    ```
 3. Restrict the agent to the ESP32. The token is kept, so **no re-flash is needed**:

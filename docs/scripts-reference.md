@@ -142,17 +142,17 @@ Puts the PC to sleep after N minutes of inactivity. [Runbook 04, Part F](04-remo
 
 Gives the PC a fixed IP address, for routers that can't reserve one. [Runbook 01, B4](01-pc-setup-bios-and-windows.md#if-your-router-cant-reserve-addresses)
 
-**Changes made to this PC** (only on the selected wired adapter):
+**Changes made to this PC** (only on the interface that holds the LAN address: the wired adapter, or its Hyper-V `vEthernet` adapter when a Hyper-V external switch is used):
 
 | What | Change |
 |---|---|
-| IPv4 addressing | DHCP off; the fixed address you give, with the current subnet prefix and default gateway |
+| IPv4 addressing | DHCP off; the fixed address (the one you give, or the suggested one you confirm), with the current subnet prefix and default gateway |
 | DNS servers | Set to the ones currently in use (or the gateway, if there are none) |
 | If the router is unreachable afterwards | Automatically switches back to DHCP |
 | With `-UseDhcp` | DHCP back on; removes the fixed address, its default route and the fixed DNS servers |
 
-**Reads:** the adapter's current address, gateway and DNS servers.
-**Network access:** pings the new address (to check that no other device uses it) and the gateway (to check the result). Local network only.
+**Reads:** the interface's current address, gateway and DNS servers; the ARP table.
+**Network access:** local network only. Pings candidate addresses near the top of the network (up to 40) to find a free one, or only the address you give, and pings the gateway to check the result.
 **Undo:** `Set-StaticIp.ps1 -UseDhcp`, or **Settings → Network & internet → Ethernet → IP assignment → Automatic (DHCP)**.
 
 ---
@@ -218,7 +218,7 @@ Creates or updates the firmware's `config.h`. [Runbook 03, Step 4](03-telegram-b
 
 **Reads:** this PC's Ethernet adapter (MAC and IP), the agent token in `C:\ProgramData\RemotePcWake\config.json`, and the current Wi-Fi name (`netsh wlan show interfaces`).
 
-**Network access:** `api.telegram.org`, only if your Telegram ID isn't known yet. It calls `getMe` (to check the bot token) and `getUpdates` (to read the message you send to your own bot). It never sends messages. With `-Esp32StaticIp`, it also pings that address on the local network to warn you if it's already in use.
+**Network access:** `api.telegram.org`, only if your Telegram ID isn't known yet. It calls `getMe` (to check the bot token) and `getUpdates` (to read the message you send to your own bot). It never sends messages. With `-Esp32StaticIp`, it also pings addresses on the local network and reads the ARP table: the given address, to warn you if it's already in use, or with `auto` up to 40 addresses near the top of the network to find a free one.
 
 **Undo:** delete `config.h`.
 
