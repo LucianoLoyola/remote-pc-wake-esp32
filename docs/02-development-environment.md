@@ -103,7 +103,7 @@ Launch it once and accept any prompts to install USB drivers.
 1. Open **Tools → Manage Libraries** (`Ctrl + Shift + I`).
 2. Search and install:
    - **UniversalTelegramBot** by *Brian Lough*
-   - **ArduinoJson** by *Benoit Blanchon*
+   - **ArduinoJson** by *Benoit Blanchon* (version 7 or newer)
 
 If the IDE asks to install dependencies, click **Install all**.
 

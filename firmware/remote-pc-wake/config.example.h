@@ -28,6 +28,29 @@
 // 3389 = Remote Desktop, 445 = Windows file sharing.
 #define PC_CHECK_PORT 3389
 
+// ---------- PC agent (optional, see docs/05-pc-agent.md) ----------
+// Enables /shutdown, /restart, /sleep, /lock, /cancel, PC stats and agent warnings.
+// Install-Agent.ps1 prints both values. Leave the token empty to disable these features.
+#define AGENT_TOKEN ""
+#define AGENT_PORT  8765
+
+// ---------- Notifications ----------
+// How often the ESP32 checks whether the PC is on (seconds).
+#define MONITOR_INTERVAL_SECONDS 30
+
+// Alert when the PC turns on / goes offline without being asked through the bot or web UI.
+#define NOTIFY_UNEXPECTED_POWER_ON  true
+#define NOTIFY_UNEXPECTED_POWER_OFF true
+
+// Forward warnings from the agent (disk almost full, Windows Update restart pending).
+#define NOTIFY_AGENT_WARNINGS true
+
+// ---------- Web UI (home network only) ----------
+// Open http://remote-pc-wake.local (see DEVICE_HOSTNAME) in a browser on your home network.
+// The web UI is disabled while WEB_PASSWORD is empty.
+#define WEB_USERNAME "admin"
+#define WEB_PASSWORD ""
+
 // ---------- Optional ----------
 // Name the ESP32 shows on your network.
 #define DEVICE_HOSTNAME "remote-pc-wake"

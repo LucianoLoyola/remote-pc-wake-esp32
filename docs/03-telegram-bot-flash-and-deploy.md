@@ -55,6 +55,16 @@ Search for your bot's username in Telegram, open the chat and press **Start**. A
 | `CPU_FREQUENCY_MHZ` | `80` | Lowest clock that supports Wi-Fi. |
 | `WIFI_TX_POWER` | `WIFI_POWER_11dBm` | Low transmit power, since the board sits next to the router. Raise it if Wi-Fi drops. |
 
+**Optional features** (you can enable them later and re-flash):
+
+| Setting | Default | Notes |
+|---|---|---|
+| `AGENT_TOKEN` / `AGENT_PORT` | empty / `8765` | Enables shutdown, restart, sleep, lock and PC stats. The agent installer prints both values ([Runbook 05](05-pc-agent.md)). Leave the token empty if you haven't installed the agent yet. |
+| `WEB_USERNAME` / `WEB_PASSWORD` | `admin` / empty | Web UI on your home network. **Disabled while the password is empty.** |
+| `MONITOR_INTERVAL_SECONDS` | `30` | How often the ESP32 checks whether the PC is on (for notifications) |
+| `NOTIFY_UNEXPECTED_POWER_ON` / `_OFF` | `true` | Alert when the PC turns on or off without being asked through the bot |
+| `NOTIFY_AGENT_WARNINGS` | `true` | Forward agent warnings (disk almost full, Windows Update restart pending) |
+
 > `config.h` is listed in `.gitignore`, so it won't be committed.
 
 ## Step 5 — Upload the firmware
@@ -67,7 +77,7 @@ Search for your bot's username in Telegram, open the chat and press **Start**. A
    Connecting to Wi-Fi....
    Connected. IP: 192.168.1.50
    ```
-5. In Telegram, the bot sends: **🤖 ESP32 online. Use /wake or /status.**
+5. In Telegram, the bot sends **🤖 ESP32 online (v1.1.0). 🔴 PC is off** (or 🟢 on) with action buttons. If `WEB_PASSWORD` is set, the message also includes the web UI address.
 
 ## Step 6 — Test it
 
@@ -80,7 +90,7 @@ With the PC **on**:
 
 Shut the PC down, wait about 30 seconds, then:
 
-- `/status` → `🔴 PC is off (or not responding)`
+- `/status` → `🔴 PC is off`
 - `/wake` → `Magic packet sent...` and then `✅ The PC is online (took N s).`
 
 > The "online" message appears when the PC answers on `PC_CHECK_PORT`, which only happens once Windows has finished booting.
@@ -109,6 +119,9 @@ Shut the PC down, wait about 30 seconds, then:
 | Messages sent while the ESP32 was offline | **Discarded**, so an old `/wake` never turns the PC on unexpectedly |
 | Wi-Fi drops | Reconnects automatically; restarts itself if it can't connect within 30 s |
 | PC doesn't come online within `WAKE_TIMEOUT_SECONDS` | Sends a warning |
+| PC turns on or goes offline without being asked through the bot | Sends an alert (configurable) |
+
+All commands, the web UI and every notification are described in [Daily use](usage.md).
 
 ---
 
