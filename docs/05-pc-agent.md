@@ -44,6 +44,8 @@ So the firewall can allow **only** the ESP32:
 2. In your router, create a **DHCP reservation** for it, like you did for the PC in [Runbook 01, B4](01-pc-setup-bios-and-windows.md#b4-reserve-a-fixed-ip-for-the-pc-in-your-router).
 
 > You can skip this and allow your whole local network instead (the default), but restricting it to the ESP32 is safer.
+>
+> **Don't have the ESP32's IP yet?** Install the agent without `-Esp32Address` now. Once the ESP32 is online and its IP is reserved, run the installer again with `-Esp32Address`. It keeps the same token, so you don't need to re-flash the firmware.
 
 ## Step 2 — Install the agent
 

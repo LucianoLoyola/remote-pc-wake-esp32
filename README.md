@@ -63,7 +63,9 @@ Only your Telegram account can send commands. Power actions, stats and warnings 
 
 ## Setup
 
-Follow the runbooks in order:
+👉 **Start here: [Getting started — complete onboarding](docs/00-getting-started.md).** It walks through the whole process in the best order, with a checkpoint after each phase.
+
+The detailed runbooks it links to:
 
 | # | Runbook | What you'll do |
 |---|---|---|
@@ -103,6 +105,7 @@ arduino-cli upload  --fqbn esp32:esp32:esp32 -p COM3 .
 │   ├── Install-Agent.ps1          # installs/updates the agent
 │   └── Uninstall-Agent.ps1
 ├── docs/
+│   ├── 00-getting-started.md      # complete onboarding, start here
 │   ├── 01-pc-setup-bios-and-windows.md
 │   ├── 02-development-environment.md
 │   ├── 03-telegram-bot-flash-and-deploy.md
