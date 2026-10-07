@@ -39,7 +39,7 @@ Run the setup script on the **target PC** from an **elevated** PowerShell window
 
 ```powershell
 cd path\to\remote-pc-wake-esp32
-powershell -ExecutionPolicy Bypass -File .\tools\Install-RemoteAccess.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-RemoteAccess.ps1
 ```
 
 The script:
@@ -56,6 +56,7 @@ It's safe to run more than once.
 | `-RestrictRdpToTailscale` | You want Remote Desktop to accept connections only from Tailscale and your LAN (recommended) |
 | `-SkipRemoteDesktop` | Windows Home, or you'll use RustDesk/Parsec instead |
 | `-AuthKey tskey-...` | Signing in without a browser, using an [auth key](https://login.tailscale.com/admin/settings/keys) |
+| `-AllowPasswordSignIn` | Your Microsoft account is set to Windows Hello only, so Remote Desktop rejects your password ([A5](#a5-microsoft-account-sign-in)) |
 
 **One manual step remains:** [disable key expiry](#a3-disable-key-expiry-required) (A3). The script tells you if it's still needed.
 
@@ -99,7 +100,11 @@ Administrators can connect by default. To allow a standard (non-admin) account, 
 
 If you sign in to Windows with a **Microsoft account**, Remote Desktop needs your **account email and password**, not your PIN.
 
-If your account is passwordless (Windows Hello only), Remote Desktop rejects your credentials. To fix it:
+If your account is passwordless (Windows Hello only), Remote Desktop rejects your credentials.
+
+**Automatic:** run `Install-RemoteAccess.ps1 -AllowPasswordSignIn`, then sign out and sign in once **with your password**.
+
+**Manual:**
 
 1. **Settings → Accounts → Sign-in options** → turn **off** "For improved security, only allow Windows Hello sign-in for Microsoft accounts on this device".
 2. Sign out and sign in once **with your password**.
@@ -190,8 +195,22 @@ Whatever you choose, make sure it **starts with Windows before anyone logs in**.
 
 ## Part F — Save power when you're done
 
-- **Sleep automatically:** Settings → System → Power → **Screen and sleep** → put the PC to sleep after N minutes when plugged in. `/wake` brings it back.
-- **Shut down from the remote session:** Start → Power → Shut down, or `shutdown /s /t 0`.
+### Sleep automatically
+
+Let the PC go to sleep by itself after a period of inactivity; `/wake` brings it back.
+
+**Automatic** (elevated PowerShell, e.g. 60 minutes; `-Minutes 0` turns it off):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Set-AutoSleep.ps1 -Minutes 60
+```
+
+**Manual:** Settings → System → Power → **Screen and sleep** → *When plugged in, put my device to sleep after* → choose the time.
+
+### Shut down when finished
+
+- From Telegram: `/shutdown`, or `/shutdown 30` to shut down in 30 minutes (needs the [PC agent](05-pc-agent.md)).
+- From the remote session: Start → Power → Shut down, or `shutdown /s /t 0`.
 
 ---
 

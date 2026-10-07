@@ -22,7 +22,7 @@
     Generate a new token even if one already exists.
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File .\agent\Install-Agent.ps1 -Esp32Address 192.168.1.50
+    powershell -ExecutionPolicy Bypass -File .\scripts\Install-Agent.ps1 -Esp32Address 192.168.1.50
 #>
 #Requires -RunAsAdministrator
 [CmdletBinding()]
@@ -34,15 +34,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. "$PSScriptRoot\lib\Common.ps1"
 
+$AgentSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'agent\RemotePcWakeAgent.ps1'
 $InstallDir = Join-Path $env:ProgramData 'RemotePcWake'
 $AgentPath = Join-Path $InstallDir 'RemotePcWakeAgent.ps1'
 $ConfigPath = Join-Path $InstallDir 'config.json'
 $TaskName = 'Remote PC Wake Agent'
 $FirewallRuleName = 'RemotePcWakeAgent'
-
-function Write-Step([string]$Text) { Write-Host "`n==> $Text" -ForegroundColor Cyan }
-function Write-Ok([string]$Text) { Write-Host "    [OK] $Text" -ForegroundColor Green }
 
 function New-Token {
     $bytes = New-Object byte[] 24
@@ -60,7 +59,7 @@ if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
 # ---------------------------------------------------------------------------
 Write-Step "Installing files to $InstallDir"
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-Copy-Item -Force -Path (Join-Path $PSScriptRoot 'RemotePcWakeAgent.ps1') -Destination $AgentPath
+Copy-Item -Force -Path $AgentSource -Destination $AgentPath
 
 $token = $null
 $diskWarningPercent = 90
@@ -125,20 +124,16 @@ if (-not $status) {
 Write-Ok "Agent $($status.agentVersion) is answering on port $Port (host $($status.hostname))."
 
 # ---------------------------------------------------------------------------
-$pcIp = Get-NetIPAddress -AddressFamily IPv4 |
-    Where-Object { $_.PrefixOrigin -in 'Dhcp', 'Manual' -and $_.IPAddress -notlike '169.254.*' -and $_.InterfaceAlias -notmatch 'Tailscale' } |
-    Select-Object -ExpandProperty IPAddress -First 1
-
 Write-Step 'Done'
 if ($tokenIsNew) {
-    Write-Host '    A new token was generated. Put these lines in firmware/remote-pc-wake/config.h and re-flash the ESP32:' -ForegroundColor Yellow
+    Write-Warn 'A new token was generated. If the ESP32 is already flashed, update config.h and flash it again.'
 }
 else {
-    Write-Host '    Existing token kept. Your config.h should contain:' -ForegroundColor Yellow
+    Write-Ok 'Existing token kept: no firmware change needed.'
 }
+Write-Info 'New-FirmwareConfig.ps1 (run as Administrator) reads the token automatically. Manual alternative, in config.h:'
 Write-Host ''
-Write-Host "    #define AGENT_TOKEN `"$token`""
-Write-Host "    #define AGENT_PORT  $Port"
+Write-Host "             #define AGENT_TOKEN `"$token`""
+Write-Host "             #define AGENT_PORT  $Port"
 Write-Host ''
-Write-Host "    PC_IP_ADDRESS in config.h must be this PC's LAN IP (probably $pcIp)."
-Write-Host '    Keep the token secret: anyone with it can shut down this PC from your network.'
+Write-Info 'Keep the token secret: anyone with it can shut down this PC from your network.'

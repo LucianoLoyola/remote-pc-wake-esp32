@@ -3,7 +3,7 @@
     Removes the Remote PC Wake agent from this PC.
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File .\agent\Uninstall-Agent.ps1
+    powershell -ExecutionPolicy Bypass -File .\scripts\Uninstall-Agent.ps1
 #>
 #Requires -RunAsAdministrator
 $ErrorActionPreference = 'Stop'

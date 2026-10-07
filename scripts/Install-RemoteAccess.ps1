@@ -24,32 +24,33 @@
 .PARAMETER RestrictRdpToTailscale
     Limit Remote Desktop to connections coming from Tailscale and the local network.
 
-.EXAMPLE
-    powershell -ExecutionPolicy Bypass -File .\tools\Install-RemoteAccess.ps1
+.PARAMETER AllowPasswordSignIn
+    Turn off "only allow Windows Hello sign-in for Microsoft accounts", which makes
+    Remote Desktop reject your password. Sign out and sign in once with your password afterwards.
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File .\tools\Install-RemoteAccess.ps1 -RestrictRdpToTailscale
+    powershell -ExecutionPolicy Bypass -File .\scripts\Install-RemoteAccess.ps1
+
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File .\scripts\Install-RemoteAccess.ps1 -RestrictRdpToTailscale -AllowPasswordSignIn
 #>
 #Requires -RunAsAdministrator
 [CmdletBinding()]
 param(
     [string]$AuthKey,
     [switch]$SkipRemoteDesktop,
-    [switch]$RestrictRdpToTailscale
+    [switch]$RestrictRdpToTailscale,
+    [switch]$AllowPasswordSignIn
 )
 
 $ErrorActionPreference = 'Stop'
+. "$PSScriptRoot\lib\Common.ps1"
 
 $TailscaleExe = Join-Path $env:ProgramFiles 'Tailscale\tailscale.exe'
 $AdminConsoleUrl = 'https://login.tailscale.com/admin/machines'
 # Language-independent name of the built-in "Remote Desktop" firewall group
 $RdpFirewallGroup = '@FirewallAPI.dll,-28752'
 $TailscaleRanges = @('100.64.0.0/10', 'fd7a:115c:a1e0::/48')
-
-function Write-Step([string]$Text) { Write-Host "`n==> $Text" -ForegroundColor Cyan }
-function Write-Ok([string]$Text) { Write-Host "    [OK]   $Text" -ForegroundColor Green }
-function Write-Warn([string]$Text) { Write-Host "    [WARN] $Text" -ForegroundColor Yellow }
-function Write-Info([string]$Text) { Write-Host "           $Text" }
 
 function Get-TailscaleStatus {
     $json = & $TailscaleExe status --json
@@ -160,11 +161,18 @@ else {
     if ($localUser -and $localUser.PrincipalSource -eq 'MicrosoftAccount') {
         Write-Info 'You sign in with a Microsoft account: use its EMAIL and PASSWORD (not the PIN) in Remote Desktop.'
 
-        $passwordless = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device' -Name DevicePasswordLessBuildVersion -ErrorAction SilentlyContinue
+        $passwordlessKey = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device'
+        $passwordless = Get-ItemProperty $passwordlessKey -Name DevicePasswordLessBuildVersion -ErrorAction SilentlyContinue
         if ($passwordless -and $passwordless.DevicePasswordLessBuildVersion -eq 2) {
-            Write-Warn 'Windows Hello-only sign-in is enabled. Remote Desktop will reject your password until you:'
-            Write-Info '1. Settings -> Accounts -> Sign-in options -> turn OFF "only allow Windows Hello sign-in".'
-            Write-Info '2. Sign out and sign in once with your password.'
+            if ($AllowPasswordSignIn) {
+                Set-ItemProperty -Path $passwordlessKey -Name DevicePasswordLessBuildVersion -Value 0 -Type DWord
+                Write-Ok 'Password sign-in allowed for Microsoft accounts.'
+                Write-Warn 'Sign out and sign in once WITH YOUR PASSWORD (not the PIN) so Remote Desktop accepts it.'
+            }
+            else {
+                Write-Warn 'Windows Hello-only sign-in is enabled. Remote Desktop will reject your password.'
+                Write-Info 'Run this script again with -AllowPasswordSignIn, then sign out and sign in once with your password.'
+            }
         }
     }
 }

@@ -26,7 +26,7 @@ This runbook installs everything needed on a **Windows** computer to compile the
 | 4 | ESP32 board package (Espressif) | **Yes** | ESP32 compiler and tools |
 | 5 | UniversalTelegramBot library | **Yes** | Telegram Bot API client |
 | 6 | ArduinoJson library | **Yes** | JSON parsing (used by the Telegram library) |
-| 7 | Arduino CLI | Optional | Build and upload from the command line |
+| 7 | Arduino CLI | **Yes** for the scripts | Build and upload from the command line |
 
 ---
 
@@ -46,6 +46,32 @@ git clone https://github.com/<owner>/remote-pc-wake-esp32.git
 > No Git? On the GitHub page, click **Code → Download ZIP** and extract it.
 
 ---
+
+## Automatic setup (Steps 2–7)
+
+Connect the ESP32 by USB, then from the repository folder (a normal PowerShell window is enough):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-DevTools.ps1
+```
+
+The script:
+
+1. Installs **Git**, **Arduino IDE 2** and **Arduino CLI** with winget, skipping what's already installed.
+2. Installs the **ESP32 board package** and the **UniversalTelegramBot** and **ArduinoJson** libraries. They're shared by Arduino IDE and Arduino CLI.
+3. Detects the connected ESP32 and its COM port. If the USB driver is missing, it tells you which one to install.
+
+Options: `-SkipIde` installs only the command-line tools.
+
+To check that everything builds, create `config.h` ([Runbook 03, Step 4](03-telegram-bot-flash-and-deploy.md#step-4--configure-the-firmware)) and run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -CompileOnly
+```
+
+---
+
+## Manual setup
 
 ## Step 2 — Connect the ESP32 and check the driver
 

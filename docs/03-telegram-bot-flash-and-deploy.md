@@ -22,6 +22,10 @@ This runbook creates the Telegram bot, configures and uploads the firmware, and 
 
 ## Step 2 — Get your Telegram user ID
 
+**Automatic:** skip this step. `New-FirmwareConfig.ps1` (Step 4) detects your ID when you send a message to your bot.
+
+**Manual:**
+
 1. Open a chat with **[@userinfobot](https://t.me/userinfobot)** and send any message.
 2. It replies with your numeric **Id** (e.g. `123456789`).
 
@@ -34,6 +38,35 @@ Search for your bot's username in Telegram, open the chat and press **Start**. A
 ---
 
 ## Step 4 — Configure the firmware
+
+### Automatic
+
+Run it **on the target PC**, in an **elevated** PowerShell window, from the repository folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1
+```
+
+The script creates `firmware/remote-pc-wake/config.h` and fills it in:
+
+| Value | How |
+|---|---|
+| PC MAC and IP | Detected from this PC's Ethernet adapter |
+| Agent token | Read from the installed agent ([Runbook 05](05-pc-agent.md)), if any |
+| Telegram ID | Detected: the script asks you to send any message to your bot |
+| Wi-Fi name and password, bot token, web UI password | Asked (the Wi-Fi name is suggested if the PC is on Wi-Fi) |
+
+You can also pass values as parameters (`-WifiSsid`, `-WifiPassword`, `-BotToken`, `-ChatId`, `-PcMac`, `-PcIp`, `-AgentToken`, `-WebPassword`). If `config.h` already exists, the script keeps its values and only changes what you pass, so you can run it again to change a single setting. For example:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -WifiSsid "NewNetwork" -WifiPassword "..."
+```
+
+> Running it on a different PC than the one you want to wake? Pass `-PcMac` and `-PcIp` with the target PC's values.
+
+The settings in the tables below keep their defaults. Edit `config.h` by hand to change them.
+
+### Manual
 
 1. In `firmware/remote-pc-wake/`, copy `config.example.h` to `config.h` if you haven't already.
 2. Edit `config.h`:
@@ -68,6 +101,26 @@ Search for your bot's username in Telegram, open the chat and press **Start**. A
 > `config.h` is listed in `.gitignore`, so it won't be committed.
 
 ## Step 5 — Upload the firmware
+
+### Automatic
+
+Connect the ESP32 by USB and run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -Monitor
+```
+
+It compiles the firmware, finds the ESP32's COM port, uploads, and opens the serial monitor (Ctrl+C to exit). You should see `Connected. IP: ...` and get the "ESP32 online" message in Telegram.
+
+| Option | Use it when |
+|---|---|
+| `-Port COM3` | Several boards are connected, or the port isn't detected |
+| `-Board esp32:esp32:esp32s3` | Your board isn't a classic ESP32 (S3, C3, S2...) |
+| `-CompileOnly` | You only want to check that it builds |
+
+If it gets stuck on *Connecting...*, hold the **BOOT** button on the board and run it again.
+
+### Manual
 
 1. Connect the ESP32 by USB.
 2. In Arduino IDE, check **Tools → Board** (*ESP32 Dev Module*) and **Tools → Port**.

@@ -77,33 +77,30 @@ The detailed runbooks it links to:
 
 Then see **[Daily use](docs/usage.md)** for commands, the web UI and notifications.
 
-On the target PC, from an elevated PowerShell window:
+Every Windows step is automated with a PowerShell script, and every runbook also documents the manual alternative. **Quick start** for people who've done this before. On the target PC, set the BIOS first, then run from an elevated PowerShell window in the repository folder:
 
 ```powershell
-# Tailscale + Remote Desktop (Runbook 04)
-powershell -ExecutionPolicy Bypass -File .\tools\Install-RemoteAccess.ps1
-
-# PC agent (Runbook 05) — prints the AGENT_TOKEN for config.h
-powershell -ExecutionPolicy Bypass -File .\agent\Install-Agent.ps1 -Esp32Address <esp32-ip>
+# Wake-on-LAN (then reserve the PC's IP in the router)
+powershell -ExecutionPolicy Bypass -File .\scripts\Enable-WakeOnLan.ps1
+# Tailscale + Remote Desktop
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-RemoteAccess.ps1 -RestrictRdpToTailscale
+# PC agent
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Agent.ps1
+# Arduino CLI/IDE, ESP32 package, libraries
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-DevTools.ps1
+# config.h (asks for Wi-Fi, bot token...)
+powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1
+# Build and upload to the ESP32
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -Monitor
 ```
 
-**Quick start** for people who've done this before:
-
-```powershell
-git clone https://github.com/<owner>/remote-pc-wake-esp32.git
-cd remote-pc-wake-esp32\firmware\remote-pc-wake
-Copy-Item config.example.h config.h   # then edit config.h
-arduino-cli compile --fqbn esp32:esp32:esp32 .
-arduino-cli upload  --fqbn esp32:esp32:esp32 -p COM3 .
-```
+See [all the scripts](docs/00-getting-started.md#all-the-scripts).
 
 ## Repository layout
 
 ```
 ├── agent/
-│   ├── RemotePcWakeAgent.ps1      # PC agent (runs as a startup task)
-│   ├── Install-Agent.ps1          # installs/updates the agent
-│   └── Uninstall-Agent.ps1
+│   └── RemotePcWakeAgent.ps1      # PC agent (runs as a startup task)
 ├── docs/
 │   ├── 00-getting-started.md      # complete onboarding, start here
 │   ├── 01-pc-setup-bios-and-windows.md
@@ -117,9 +114,17 @@ arduino-cli upload  --fqbn esp32:esp32:esp32 -p COM3 .
 │       ├── remote-pc-wake.ino     # ESP32 firmware
 │       ├── web_ui.h               # web UI page
 │       └── config.example.h       # copy to config.h (git-ignored)
-└── tools/
-    ├── Install-RemoteAccess.ps1   # set up Tailscale + Remote Desktop on the PC
-    └── Send-MagicPacket.ps1       # test WoL from another Windows PC
+└── scripts/                       # one script per Windows configuration
+    ├── Enable-WakeOnLan.ps1       # network adapter + Fast Startup for Wake-on-LAN
+    ├── Install-RemoteAccess.ps1   # Tailscale + Remote Desktop
+    ├── Set-AutoSleep.ps1          # sleep after N minutes of inactivity
+    ├── Install-Agent.ps1          # install/update the PC agent
+    ├── Uninstall-Agent.ps1
+    ├── Install-DevTools.ps1       # Arduino CLI/IDE, ESP32 package, libraries
+    ├── New-FirmwareConfig.ps1     # create/update config.h
+    ├── Install-Firmware.ps1       # build and upload the firmware
+    ├── Send-MagicPacket.ps1       # test WoL from another Windows PC
+    └── lib/Common.ps1             # shared helpers
 ```
 
 ## Security notes

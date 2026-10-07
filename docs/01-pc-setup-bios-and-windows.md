@@ -70,7 +70,27 @@ Usually **F10 → Yes**.
 
 ## Part B — Windows
 
-> Run the PowerShell commands in an **elevated** PowerShell window (right-click Start → **Terminal (Admin)**).
+### Automatic (recommended)
+
+In an **elevated** PowerShell window (right-click Start → **Terminal (Admin)**), from the repository folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Enable-WakeOnLan.ps1
+```
+
+The script does B1–B3: it configures the Ethernet adapter, arms it to wake the PC, disables Fast Startup, and checks the result. At the end it prints the **MAC** and **IP** for B4. The network drops for a few seconds while the adapter restarts.
+
+To only check the current configuration without changing anything (no Administrator needed):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Enable-WakeOnLan.ps1 -CheckOnly
+```
+
+Then continue with [B4](#b4-reserve-a-fixed-ip-for-the-pc-in-your-router) (router) and [B5](#b5-test-wake-on-lan-locally-before-using-the-esp32) (test).
+
+### Manual
+
+Run the PowerShell commands below in an **elevated** PowerShell window.
 
 ### B1. Identify the Ethernet adapter and its MAC address
 
@@ -153,9 +173,9 @@ This IP goes into `PC_IP_ADDRESS` in `config.h`.
 1. Shut down the PC with **Start → Power → Shut down**.
 2. Wait about 30 seconds. Check that the Ethernet port LEDs (on the PC or on the router) are still on. If they're off, the card has no power: go back to [A3](#a3-disable-deep-power-saving-modes).
 3. From a **second device on the same network**, send a magic packet:
-   - **Another Windows PC:** use [`tools/Send-MagicPacket.ps1`](../tools/Send-MagicPacket.ps1) from this repository:
+   - **Another Windows PC:** use [`scripts/Send-MagicPacket.ps1`](../scripts/Send-MagicPacket.ps1) from this repository:
      ```powershell
-     powershell -ExecutionPolicy Bypass -File .\tools\Send-MagicPacket.ps1 -MacAddress "AA:BB:CC:DD:EE:FF"
+     powershell -ExecutionPolicy Bypass -File .\scripts\Send-MagicPacket.ps1 -MacAddress "AA:BB:CC:DD:EE:FF"
      ```
    - **Phone:** any "Wake On Lan" app from the app store.
 4. The PC should power on within a few seconds.

@@ -49,10 +49,12 @@ So the firewall can allow **only** the ESP32:
 
 ## Step 2 — Install the agent
 
+### Automatic
+
 On the **target PC**, open an **elevated** PowerShell window (right-click Start → **Terminal (Admin)**), go to the repository folder and run:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\agent\Install-Agent.ps1 -Esp32Address 192.168.1.50
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Agent.ps1 -Esp32Address 192.168.1.50
 ```
 
 Replace `192.168.1.50` with the ESP32's IP from Step 1, or leave out `-Esp32Address` to allow any device on your local network.
@@ -70,9 +72,48 @@ The installer:
     #define AGENT_PORT  8765
 ```
 
+### Manual
+
+In an elevated PowerShell window, from the repository folder. Replace `LocalSubnet` with the ESP32's IP to restrict access to it.
+
+1. Copy the agent and create its configuration with a random token:
+   ```powershell
+   $dir = "$env:ProgramData\RemotePcWake"
+   New-Item -ItemType Directory -Force $dir | Out-Null
+   Copy-Item .\agent\RemotePcWakeAgent.ps1 $dir
+   $bytes = New-Object byte[] 24; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+   $token = ($bytes | ForEach-Object { $_.ToString('x2') }) -join ''
+   @{ Token = $token; Port = 8765; ListenAddress = '+'; DiskWarningPercent = 90 } | ConvertTo-Json | Set-Content "$dir\config.json"
+   $token   # write it down for config.h
+   ```
+2. Restrict the folder to Administrators and SYSTEM (it contains the token):
+   ```powershell
+   icacls $dir /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F'
+   ```
+3. Allow the ESP32 through the firewall:
+   ```powershell
+   New-NetFirewallRule -Name RemotePcWakeAgent -DisplayName 'Remote PC Wake Agent' -Direction Inbound -Protocol TCP -LocalPort 8765 -RemoteAddress LocalSubnet -Action Allow -Profile Any
+   ```
+4. Run the agent at startup as SYSTEM: open **Task Scheduler** → **Create Task**:
+   - **General:** name `Remote PC Wake Agent`; **Change User or Group** → `SYSTEM`; check **Run with highest privileges**.
+   - **Triggers:** New → **At startup**.
+   - **Actions:** New → Program `powershell.exe`, arguments `-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\ProgramData\RemotePcWake\RemotePcWakeAgent.ps1"`.
+   - **Settings:** uncheck **Stop the task if it runs longer than**; check **If the task fails, restart every 1 minute**.
+   - Right-click the task → **Run**.
+5. Test it with the commands in [API reference](#api-reference).
+
 ## Step 3 — Update the firmware
 
-1. Paste those two lines into `firmware/remote-pc-wake/config.h`, replacing the existing `AGENT_TOKEN` / `AGENT_PORT` lines.
+**Automatic** (elevated PowerShell, on the target PC): `New-FirmwareConfig.ps1` reads the token from the installed agent and updates `config.h`; then upload:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1
+```
+
+**Manual:**
+
+1. Paste the two `#define` lines into `firmware/remote-pc-wake/config.h`, replacing the existing `AGENT_TOKEN` / `AGENT_PORT` lines.
 2. Upload the firmware again ([Runbook 03, Step 5](03-telegram-bot-flash-and-deploy.md#step-5--upload-the-firmware)).
 
 ## Step 4 — Test it
@@ -115,7 +156,7 @@ Stop-ScheduledTask -TaskName 'Remote PC Wake Agent'; Start-ScheduledTask -TaskNa
 ## Uninstall
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\agent\Uninstall-Agent.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\Uninstall-Agent.ps1
 ```
 
 This removes the scheduled task, the firewall rule and `C:\ProgramData\RemotePcWake\`.
