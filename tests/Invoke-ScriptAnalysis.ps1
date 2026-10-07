@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Checks every PowerShell script in the repository. The same checks run on GitHub for every change.
+    Checks every PowerShell script in the repository. The same checks run on GitHub for pull requests to main and on main.
 
 .DESCRIPTION
     1. Syntax: every script must parse in Windows PowerShell 5.1 (the version shipped with Windows).

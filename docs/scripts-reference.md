@@ -12,7 +12,7 @@ Get-Help .\scripts\Enable-WakeOnLan.ps1 -Full
 
 ## Our rules for every script
 
-These rules are part of the project, and the automated checks enforce some of them on every change:
+These rules are part of the project, and the automated checks enforce some of them:
 
 | Rule | How you can verify it |
 |---|---|
@@ -26,7 +26,7 @@ These rules are part of the project, and the automated checks enforce some of th
 
 ### Automated analysis
 
-Every change to the repository is checked on GitHub by [`tests/Invoke-ScriptAnalysis.ps1`](../tests/Invoke-ScriptAnalysis.ps1):
+GitHub runs [`tests/Invoke-ScriptAnalysis.ps1`](../tests/Invoke-ScriptAnalysis.ps1) on every pull request to `main` (before merging) and on every push to `main` (including merges):
 
 1. **Syntax:** every script must parse in Windows PowerShell 5.1, the version included with Windows.
 2. **Forbidden patterns:** no downloading and running code, no hidden code (see the table above).

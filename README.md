@@ -103,7 +103,7 @@ See [all the scripts](docs/00-getting-started.md#all-the-scripts).
 You shouldn't have to take our word for it, so the project makes the scripts easy to check:
 
 - **Every change is documented.** The [Scripts reference](docs/scripts-reference.md) lists, for each script, every setting it changes, every internet address it contacts, and how to undo it. The same information is in each script's help: `Get-Help .\scripts\<script>.ps1 -Full`.
-- **Automated analysis on every change.** GitHub checks every script with Microsoft's [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer). It also rejects code that downloads and runs other code, or that hides what it does. The results are public (badge at the top), and you can [run the same checks yourself](docs/scripts-reference.md#automated-analysis).
+- **Automated analysis before and after every merge.** On every pull request to `main`, and again on `main` after the merge, GitHub checks every script with Microsoft's [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer). It also rejects code that downloads and runs other code, or that hides what it does. The results are public (badge at the top), and you can [run the same checks yourself](docs/scripts-reference.md#automated-analysis).
 - **Plain code, no telemetry.** No obfuscation, no binaries, no hidden network access. Software is installed only through winget and the official Arduino/Espressif indexes.
 - **Check before changing.** `Enable-WakeOnLan.ps1 -CheckOnly` reports the configuration without touching it.
 
@@ -111,7 +111,7 @@ You shouldn't have to take our word for it, so the project makes the scripts eas
 
 ```
 ├── .github/workflows/
-│   └── powershell-analysis.yml    # automated script checks on every change
+│   └── powershell-analysis.yml    # script checks on pull requests to main and on main
 ├── agent/
 │   └── RemotePcWakeAgent.ps1      # PC agent (runs as a startup task)
 ├── docs/

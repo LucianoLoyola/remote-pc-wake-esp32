@@ -1,17 +1,31 @@
 name: PowerShell analysis
 
-# Checks every PowerShell script on each change: syntax (Windows PowerShell 5.1),
+# Checks every PowerShell script: syntax (Windows PowerShell 5.1),
 # forbidden patterns (no downloading or hiding code) and PSScriptAnalyzer.
+#
+# Runs:
+#   - on pull requests targeting main, so problems are caught before merging
+#     (make it a required check in the branch protection rules for main);
+#   - on every push to main, which includes merged pull requests;
+#   - manually, from the Actions tab.
 on:
-  push:
   pull_request:
+    branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# A new push to the same pull request cancels the analysis still running for the previous one.
+concurrency:
+  group: powershell-analysis-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   analyze:
+    name: Analyze PowerShell scripts
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
