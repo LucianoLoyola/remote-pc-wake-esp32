@@ -40,7 +40,7 @@ Close and reopen the terminal, then clone the repository:
 
 ```powershell
 cd $HOME\Documents
-git clone https://github.com/<owner>/remote-pc-wake-esp32.git
+git clone https://github.com/LucianoLoyola/remote-pc-wake-esp32.git
 ```
 
 > No Git? On the GitHub page, click **Code → Download ZIP** and extract it.

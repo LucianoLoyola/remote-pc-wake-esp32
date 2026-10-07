@@ -42,7 +42,7 @@ This guide takes you from zero to a working setup, in the most efficient order. 
 
 ### Get the repository and open PowerShell
 
-1. On the target PC, download the repository: `git clone https://github.com/<owner>/remote-pc-wake-esp32.git`, or **Code → Download ZIP** on GitHub and extract it. → [details](02-development-environment.md#step-1--install-git-and-get-the-repository)
+1. On the target PC, download the repository: `git clone https://github.com/LucianoLoyola/remote-pc-wake-esp32.git`, or **Code → Download ZIP** on GitHub and extract it. → [details](02-development-environment.md#step-1--install-git-and-get-the-repository)
 2. Open an **elevated** PowerShell window (right-click Start → **Terminal (Admin)**) and go to the repository folder:
    ```powershell
    cd $HOME\Documents\remote-pc-wake-esp32

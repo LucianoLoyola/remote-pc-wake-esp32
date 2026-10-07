@@ -1,6 +1,6 @@
 # remote-pc-wake-esp32
 
-[![PowerShell analysis](https://github.com/<owner>/remote-pc-wake-esp32/actions/workflows/powershell-analysis.yml/badge.svg)](https://github.com/<owner>/remote-pc-wake-esp32/actions/workflows/powershell-analysis.yml)
+[![PowerShell analysis](https://github.com/LucianoLoyola/remote-pc-wake-esp32/actions/workflows/powershell-analysis.yml/badge.svg)](https://github.com/LucianoLoyola/remote-pc-wake-esp32/actions/workflows/powershell-analysis.yml)
 
 **Turn your PC on and off from anywhere with a cheap ESP32 and a Telegram bot, get alerts about it, and control it remotely over Tailscale.**
 
