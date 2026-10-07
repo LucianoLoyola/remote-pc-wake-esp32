@@ -76,7 +76,7 @@
 #include <ArduinoJson.h>
 #include "web_ui.h"
 
-#define FIRMWARE_VERSION "1.2.0"
+#define FIRMWARE_VERSION "1.2.1"
 
 const unsigned long POLL_INTERVAL_MS = POLL_INTERVAL_SECONDS * 1000UL;
 const unsigned long MONITOR_INTERVAL_MS = MONITOR_INTERVAL_SECONDS * 1000UL;
@@ -235,7 +235,15 @@ int agentRequest(const char* method, const String& path, String& body) {
     return -1;
   }
   http.addHeader("X-Agent-Token", AGENT_TOKEN);
-  int code = http.sendRequest(method, String());
+  int code;
+  if (strcmp(method, "POST") == 0) {
+    // Windows' HTTP server rejects a POST without Content-Length (HTTP 411), and HTTPClient
+    // only sends that header when there's a body, so send an empty JSON object.
+    http.addHeader("Content-Type", "application/json");
+    code = http.sendRequest(method, String("{}"));
+  } else {
+    code = http.sendRequest(method, String());
+  }
   if (code > 0) {
     body = http.getString();
   }

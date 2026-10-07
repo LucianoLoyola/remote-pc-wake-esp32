@@ -140,7 +140,7 @@ If it gets stuck on *Connecting...*, hold the **BOOT** button on the board and r
    Connecting to Wi-Fi....
    Connected. IP: 192.168.1.50
    ```
-5. In Telegram, the bot sends **ESP32 online (v1.2.0). PC is off** (or on) with action buttons. If `WEB_PASSWORD` is set, the message also includes the web UI address.
+5. In Telegram, the bot sends **ESP32 online (v1.2.1). PC is off** (or on) with action buttons. If `WEB_PASSWORD` is set, the message also includes the web UI address.
 
 ## Step 6 — Test it
 
