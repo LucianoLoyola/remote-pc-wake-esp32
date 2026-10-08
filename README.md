@@ -1,10 +1,14 @@
-# remote-pc-wake-esp32
+# WakeDesk
 
-[![PowerShell analysis](https://github.com/LucianoLoyola/remote-pc-wake-esp32/actions/workflows/powershell-analysis.yml/badge.svg)](https://github.com/LucianoLoyola/remote-pc-wake-esp32/actions/workflows/powershell-analysis.yml)
+*Your desktop, wherever you are.*
+
+[![PowerShell analysis](https://github.com/wakedesk/wakedesk-esp32/actions/workflows/powershell-analysis.yml/badge.svg)](https://github.com/wakedesk/wakedesk-esp32/actions/workflows/powershell-analysis.yml)
 
 **Turn your PC on and off from anywhere with a cheap ESP32 and a Telegram bot, get alerts about it, and control it remotely over Tailscale.**
 
 No port forwarding, no public IP, no always-on PC. It works behind CGNAT.
+
+> WakeDesk was previously called *remote-pc-wake-esp32*. Old links redirect here, and existing installations keep working: some technical names (like `remote-pc-wake.local`) keep the old name on purpose. See the [brand guide](docs/brand.md).
 
 ```
  Phone ── /wake ──► Telegram ◄── polls ── ESP32 ── magic packet ──► PC powers on
@@ -88,13 +92,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Enable-WakeOnLan.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-RemoteAccess.ps1 -RestrictRdpToTailscale
 # PC agent
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Agent.ps1
-# Arduino CLI/IDE, ESP32 package, libraries
-powershell -ExecutionPolicy Bypass -File .\scripts\Install-DevTools.ps1
-# config.h (asks for Wi-Fi, bot token...)
+# Your settings (asks for Wi-Fi, bot token...)
 powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1
-# Build and upload to the ESP32
+# ESP32 by USB: installs the released firmware and sends your settings (no Arduino needed)
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -Monitor
 ```
+
+The firmware is built and published by GitHub Actions on every release; it contains no personal data, and your settings are sent to the ESP32 over USB. To modify the firmware, see [Runbook 02](docs/02-development-environment.md).
 
 See [all the scripts](docs/00-getting-started.md#all-the-scripts).
 
@@ -114,6 +118,7 @@ You shouldn't have to take our word for it, so the project makes the scripts eas
 │   ├── ISSUE_TEMPLATE/            # bug report, hardware report and feature request forms
 │   ├── pull_request_template.md
 │   └── workflows/
+│       ├── firmware.yml           # builds the firmware; attaches it to each release
 │       └── powershell-analysis.yml  # script checks on pull requests to main and on main
 ├── agent/
 │   └── RemotePcWakeAgent.ps1      # PC agent (runs as a startup task)
@@ -125,10 +130,12 @@ You shouldn't have to take our word for it, so the project makes the scripts eas
 │   ├── 04-remote-access-tailscale.md
 │   ├── 05-pc-agent.md
 │   ├── scripts-reference.md       # what each script changes, contacts, and how to undo it
+│   ├── brand.md                   # name, colors and image guidelines
 │   └── usage.md                   # commands, web UI, notifications
 ├── firmware/
 │   └── remote-pc-wake/
 │       ├── remote-pc-wake.ino     # ESP32 firmware
+│       ├── settings.h             # settings stored on the ESP32, USB provisioning
 │       ├── web_ui.h               # web UI page
 │       └── config.example.h       # copy to config.h (git-ignored)
 ├── scripts/                       # one script per Windows configuration
@@ -138,9 +145,9 @@ You shouldn't have to take our word for it, so the project makes the scripts eas
 │   ├── Set-StaticIp.ps1           # fixed IP for the PC (routers without DHCP reservation)
 │   ├── Install-Agent.ps1          # install/update the PC agent
 │   ├── Uninstall-Agent.ps1
-│   ├── Install-DevTools.ps1       # Arduino CLI/IDE, ESP32 package, libraries
+│   ├── Install-DevTools.ps1       # Arduino CLI/IDE, ESP32 package, libraries (only to build)
 │   ├── New-FirmwareConfig.ps1     # create/update config.h
-│   ├── Install-Firmware.ps1       # build and upload the firmware
+│   ├── Install-Firmware.ps1       # install the released firmware, send your settings
 │   ├── Send-MagicPacket.ps1       # test WoL from another Windows PC
 │   └── lib/Common.ps1             # shared helpers
 ├── tests/

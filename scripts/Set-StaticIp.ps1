@@ -11,6 +11,7 @@
          Hyper-V "vEthernet" adapter bound to it when a Hyper-V external switch is used.
       2. Without -IpAddress, suggests a free address near the top of your network
          (routers usually hand out addresses from the bottom) and asks you to confirm.
+         With -IpAddress auto, uses the suggested address without asking.
       3. Checks that the address is in the same network and that no device uses it
          (ping and ARP, so devices that block ping are detected too).
       4. Applies the fixed address, reusing the current gateway, subnet and DNS servers.
@@ -22,6 +23,7 @@
 
 .PARAMETER IpAddress
     The fixed address for this PC, e.g. 192.168.1.250. If omitted, a free one is suggested.
+    "auto" picks a free one without asking (for unattended runs, such as the WakeDesk app).
 
 .PARAMETER UseDhcp
     Undo: go back to getting the address automatically from the router.
@@ -108,13 +110,14 @@ if ($UseDhcp) {
 
 # ---------------------------------------------------------------------------
 Write-Step 'Choosing the address'
-if (-not $IpAddress) {
+$auto = $IpAddress -eq 'auto'
+if (-not $IpAddress -or $auto) {
     Write-Info 'Looking for a free address near the top of your network...'
     $suggested = Find-FreeIPv4Address $lan.Gateway $lan.PrefixLength @()
     if (-not $suggested) {
         throw 'No free address found near the top of the network. Pass one with -IpAddress.'
     }
-    $answer = Read-Host -Prompt "Use $suggested for this PC? [Y/n]"
+    $answer = if ($auto) { 'y' } else { Read-Host -Prompt "Use $suggested for this PC? [Y/n]" }
     if ($answer -and $answer -notmatch '^(y|yes|s|si)$') {
         Write-Info 'Cancelled. Run again with -IpAddress to choose a specific address.'
         return

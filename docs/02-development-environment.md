@@ -1,5 +1,7 @@
 # Runbook 02 — Development environment (tools to build and flash the firmware)
 
+> **Most people don't need this runbook.** `Install-Firmware.ps1` installs the released firmware, already compiled, without any of these tools ([Runbook 03, Step 5](03-telegram-bot-flash-and-deploy.md#step-5--upload-the-firmware)). Use this runbook only to modify the firmware, change build-time settings (power saving, notifications), or build it yourself.
+
 This runbook installs everything needed on a **Windows** computer to compile the firmware and upload it to the ESP32. You only need this setup once. Any Windows PC works; it doesn't have to be the target PC.
 
 **Estimated time:** 20–30 minutes (most of it downloads).
@@ -40,7 +42,7 @@ Close and reopen the terminal, then clone the repository:
 
 ```powershell
 cd $HOME\Documents
-git clone https://github.com/LucianoLoyola/remote-pc-wake-esp32.git
+git clone https://github.com/wakedesk/wakedesk-esp32.git
 ```
 
 > No Git? On the GitHub page, click **Code → Download ZIP** and extract it.
@@ -147,7 +149,7 @@ If the IDE asks to install dependencies, click **Install all**.
 1. Open `firmware/remote-pc-wake/remote-pc-wake.ino` from the repository (**File → Open**).
 2. Copy `config.example.h` to `config.h` in the same folder. You can keep the placeholder values for this test.
    ```powershell
-   cd remote-pc-wake-esp32\firmware\remote-pc-wake
+   cd wakedesk-esp32\firmware\remote-pc-wake
    Copy-Item config.example.h config.h
    ```
 3. Click **Verify** (✓ icon, `Ctrl + R`).

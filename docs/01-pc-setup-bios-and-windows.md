@@ -181,7 +181,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Set-StaticIp.ps1
 The script:
 
 1. Finds the interface that holds the PC's address, including the Hyper-V `vEthernet` case (see the table below).
-2. Suggests a free address near the top of **your** network and asks you to confirm. To choose one yourself, add `-IpAddress 192.168.x.y`.
+2. Suggests a free address near the top of **your** network and asks you to confirm. To choose one yourself, add `-IpAddress 192.168.x.y`; to accept the suggestion without being asked, add `-IpAddress auto`.
 3. Checks that the address is in your network and that no device uses it. Devices that block ping, like Windows PCs, are detected too.
 4. Keeps your current gateway and DNS servers.
 5. Restores automatic addressing by itself if the router stops responding.
@@ -244,6 +244,6 @@ The PC can now be powered on remotely. To control it once it's on, continue with
 | WoL worked, then stopped after a Windows update | Windows Update replaced the network driver and reset its settings. Repeat B2, or install the driver from the motherboard vendor's website. |
 | WoL stops working after a power outage | Hardware limitation; see A4 |
 | Works locally but not with the ESP32 | ESP32 on a different subnet/VLAN or on a guest network. It must be on the same LAN as the PC. |
-| The ESP32 stopped finding the PC after days or weeks | The PC's IP changed. Fix it with a DHCP reservation (B4) or `Set-StaticIp.ps1`, then update `config.h` with `New-FirmwareConfig.ps1` and flash again. |
+| The ESP32 stopped finding the PC after days or weeks | The PC's IP changed. Fix it with a DHCP reservation (B4) or `Set-StaticIp.ps1`, then update `config.h` with `New-FirmwareConfig.ps1` and send it with `Install-Firmware.ps1 -SettingsOnly`. |
 | Router admin page keeps sending you back to the login | Some ISP routers lock their settings. Use a fixed address instead ([If your router can't reserve addresses](#if-your-router-cant-reserve-addresses)). |
 | `Set-StaticIp.ps1` restored DHCP by itself | The router didn't answer with the new address. Check that the address is in your network, or let the script suggest one (run it without `-IpAddress`). |

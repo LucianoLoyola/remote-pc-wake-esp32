@@ -11,7 +11,7 @@ Only the **latest release** receives security fixes. Please update before report
 **Don't open a public issue.** Report it privately through GitHub:
 
 1. Go to the repository's **Security** tab.
-2. Click **Report a vulnerability** ([direct link](https://github.com/LucianoLoyola/remote-pc-wake-esp32/security/advisories/new)).
+2. Click **Report a vulnerability** ([direct link](https://github.com/wakedesk/wakedesk-esp32/security/advisories/new)).
 3. Describe the problem, how to reproduce it, and its impact.
 
 What to expect:
@@ -55,7 +55,7 @@ Knowing the design helps assess a report:
 
 | Leaked | What to do |
 |---|---|
-| Bot token | Send `/revoke` to @BotFather, then `New-FirmwareConfig.ps1 -BotToken "<new token>"` and flash the ESP32 again. |
-| Agent token | `Install-Agent.ps1 -NewToken`, then `New-FirmwareConfig.ps1` (as Administrator) and flash the ESP32 again. |
-| Web UI password | `New-FirmwareConfig.ps1 -ChangeWebPassword` and flash the ESP32 again. |
-| Wi-Fi password | Change it on the router, then `New-FirmwareConfig.ps1 -ChangeWifiPassword` and flash the ESP32 again. |
+| Bot token | Send `/revoke` to @BotFather, then `New-FirmwareConfig.ps1 -BotToken "<new token>"` and `Install-Firmware.ps1 -SettingsOnly`. |
+| Agent token | `Install-Agent.ps1 -NewToken`, then `New-FirmwareConfig.ps1` (as Administrator) and `Install-Firmware.ps1 -SettingsOnly`. |
+| Web UI password | `New-FirmwareConfig.ps1 -ChangeWebPassword` and `Install-Firmware.ps1 -SettingsOnly`. |
+| Wi-Fi password | Change it on the router, then `New-FirmwareConfig.ps1 -ChangeWifiPassword` and `Install-Firmware.ps1 -SettingsOnly`. |

@@ -8,10 +8,11 @@ const char WEB_UI_HTML[] PROGMEM = R"HTML(<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Remote PC Wake</title>
+<title>WakeDesk</title>
 <style>
-:root{--bg:#f4f5f7;--card:#fff;--text:#1d2129;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#16a34a;--warn:#d97706;--bad:#dc2626}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#181b21;--text:#e6e8eb;--muted:#9aa1ab;--line:#2a2f37;--accent:#4f8cff;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444}}
+/* WakeDesk brand colors: see docs/brand.md */
+:root{--bg:#F4F7FB;--card:#FFFFFF;--text:#0B1426;--muted:#4A5B75;--line:#DCE3EE;--accent:#0E7490;--on-accent:#FFFFFF;--ok:#15803D;--warn:#B45309;--bad:#B91C1C}
+@media (prefers-color-scheme:dark){:root{--bg:#0B1426;--card:#13203A;--text:#E6EDF7;--muted:#8FA3BF;--line:#22314F;--accent:#22D3EE;--on-accent:#0B1426;--ok:#22C55E;--warn:#F59E0B;--bad:#EF4444}}
 *{box-sizing:border-box}
 body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
 main{max-width:560px;margin:0 auto;padding:16px}
@@ -31,7 +32,7 @@ h1{font-size:18px;margin:4px 0 16px}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 button,select{font:inherit;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text)}
 button{cursor:pointer;font-weight:600}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff;grid-column:1/-1}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);grid-column:1/-1}
 button.danger{color:var(--bad)}
 button:disabled{opacity:.4;cursor:default}
 .when{display:flex;gap:8px;margin-top:8px;align-items:center}
@@ -44,7 +45,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin-top:8px}
 </head>
 <body>
 <main>
-<h1>Remote PC Wake</h1>
+<h1>WakeDesk</h1>
 
 <section class="card">
   <div class="status" id="status"><span class="dot"></span><span id="statusText">Checking…</span></div>

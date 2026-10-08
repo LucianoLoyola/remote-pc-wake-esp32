@@ -1,5 +1,5 @@
 /*
-  remote-pc-wake — Wake and control your PC from anywhere with an ESP32 and a Telegram bot.
+  WakeDesk — Wake and control your PC from anywhere with an ESP32 and a Telegram bot.
 
   Telegram commands:
     /wake               Send a Wake-on-LAN magic packet to the PC
@@ -12,23 +12,60 @@
     /menu               Show buttons for all actions
   [agent] = requires the PC agent (see docs/05-pc-agent.md)
 
-  Also serves a web UI on the local network: http://<DEVICE_HOSTNAME>.local
+  Also serves a web UI on the local network: http://<hostname>.local
 
   Required libraries (Arduino IDE -> Library Manager):
     - UniversalTelegramBot (by Brian Lough)
     - ArduinoJson 7 (by Benoit Blanchon)
 
-  Setup: copy config.example.h to config.h and fill in your values.
+  Settings: stored on the ESP32 and written over USB by scripts/Install-Firmware.ps1 (see
+  settings.h). People who build the firmware themselves can use config.h instead.
   Docs: see the docs/ folder in the repository.
 */
 
+// config.h is optional: released images are built without it and get their settings over USB.
 #if __has_include("config.h")
 #include "config.h"
-#else
-#error "config.h not found. Copy config.example.h to config.h and fill in your values."
 #endif
 
-// Defaults for settings added after the first release, so older config.h files keep compiling.
+// Defaults for every config.h setting: empty for released images, and so that config.h files
+// from older versions keep compiling.
+#ifndef WIFI_SSID
+#define WIFI_SSID ""
+#endif
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD ""
+#endif
+#ifndef BOT_TOKEN
+#define BOT_TOKEN ""
+#endif
+#ifndef ALLOWED_CHAT_ID
+#define ALLOWED_CHAT_ID ""
+#endif
+#ifndef PC_MAC
+#define PC_MAC ""
+#endif
+#ifndef PC_IP_ADDRESS
+#define PC_IP_ADDRESS ""
+#endif
+#ifndef PC_CHECK_PORT
+#define PC_CHECK_PORT 3389
+#endif
+#ifndef DEVICE_HOSTNAME
+#define DEVICE_HOSTNAME "remote-pc-wake"
+#endif
+#ifndef WAKE_TIMEOUT_SECONDS
+#define WAKE_TIMEOUT_SECONDS 120
+#endif
+#ifndef POLL_INTERVAL_SECONDS
+#define POLL_INTERVAL_SECONDS 15
+#endif
+#ifndef CPU_FREQUENCY_MHZ
+#define CPU_FREQUENCY_MHZ 80
+#endif
+#ifndef WIFI_TX_POWER
+#define WIFI_TX_POWER WIFI_POWER_11dBm
+#endif
 #ifndef AGENT_TOKEN
 #define AGENT_TOKEN ""
 #endif
@@ -76,7 +113,9 @@
 #include <ArduinoJson.h>
 #include "web_ui.h"
 
-#define FIRMWARE_VERSION "1.1.0"
+#define FIRMWARE_VERSION "1.2.0"
+
+#include "settings.h"
 
 const unsigned long POLL_INTERVAL_MS = POLL_INTERVAL_SECONDS * 1000UL;
 const unsigned long MONITOR_INTERVAL_MS = MONITOR_INTERVAL_SECONDS * 1000UL;
@@ -94,7 +133,7 @@ const int STABLE_PROBES_AGENT_DOWN = 4;  // the agent may start a bit after Wind
 
 WiFiUDP udp;
 WiFiClientSecure secureClient;
-UniversalTelegramBot bot(BOT_TOKEN, secureClient);
+UniversalTelegramBot* bot = nullptr;  // created in setup() with the stored bot token
 WebServer server(80);
 bool webEnabled = false;
 
@@ -131,7 +170,7 @@ String expectationLabel;                 // e.g. "shut down", "go to sleep"
 long uptimeBeforeRestart = 0;
 
 bool agentEnabled() {
-  return strlen(AGENT_TOKEN) > 0;
+  return !settings.agentToken.isEmpty();
 }
 
 bool isOn(PcState state) {
@@ -178,21 +217,10 @@ String formatDuration(long seconds) {
 }
 
 void notify(const String& text) {
-  bot.sendMessage(ALLOWED_CHAT_ID, text, "");
+  bot->sendMessage(settings.chatId, text, "");
 }
 
 // ---------- Network helpers ----------
-
-bool parseMac(const char* text, uint8_t* mac) {
-  unsigned int b[6];
-  if (sscanf(text, "%x%*c%x%*c%x%*c%x%*c%x%*c%x", &b[0], &b[1], &b[2], &b[3], &b[4], &b[5]) != 6) {
-    return false;
-  }
-  for (int i = 0; i < 6; i++) {
-    mac[i] = (uint8_t)b[i];
-  }
-  return true;
-}
 
 void sendMagicPacket() {
   // Magic packet: 6 bytes of 0xFF followed by the target MAC repeated 16 times.
@@ -219,7 +247,7 @@ void sendMagicPacket() {
 
 bool isPortOpen() {
   WiFiClient client;
-  bool open = client.connect(pcIp, PC_CHECK_PORT, 1500);
+  bool open = client.connect(pcIp, settings.pcCheckPort, 1500);
   client.stop();
   return open;
 }
@@ -231,10 +259,10 @@ int agentRequest(const char* method, const String& path, String& body) {
   HTTPClient http;
   http.setConnectTimeout(1500);
   http.setTimeout(5000);
-  if (!http.begin(client, pcIp.toString(), AGENT_PORT, path)) {
+  if (!http.begin(client, pcIp.toString(), settings.agentPort, path)) {
     return -1;
   }
-  http.addHeader("X-Agent-Token", AGENT_TOKEN);
+  http.addHeader("X-Agent-Token", settings.agentToken);
   int code;
   if (strcmp(method, "POST") == 0) {
     // Windows' HTTP server rejects a POST without Content-Length (HTTP 411), and HTTPClient
@@ -262,7 +290,7 @@ PcState probePc() {
       return PC_ON;
     }
     if (code == 401) {
-      lastAgentError = "wrong token (check AGENT_TOKEN)";
+      lastAgentError = "wrong token (update the agent token in the ESP32 settings)";
     } else if (code > 0) {
       lastAgentError = "HTTP " + String(code);
     } else {
@@ -464,7 +492,7 @@ String runAction(const String& action, long delaySeconds, bool& ok) {
     return "Could not reach the PC agent. Is the PC on?";
   }
   if (code == 401) {
-    return "The agent rejected the token. Check AGENT_TOKEN in config.h.";
+    return "The agent rejected the token. Update the agent token in the ESP32 settings.";
   }
 
   JsonDocument response;
@@ -520,7 +548,7 @@ const char* HELP_TEXT =
     "/menu - buttons for everything";
 
 void reply(const String& chatId, const String& text) {
-  bot.sendMessage(chatId, text, "");
+  bot->sendMessage(chatId, text, "");
 }
 
 void runAndReply(const String& chatId, const String& action, long delaySeconds) {
@@ -560,7 +588,7 @@ void handleCommand(const String& chatId, String text) {
     command = command.substring(0, at);
   }
 
-  if (command == "/wake") {
+  if (command == "/wake" || (command == "/start" && argument == "wake")) {
     runAndReply(chatId, "wake", 0);
   } else if (command == "/status") {
     reply(chatId, formatStatus(probePc()));
@@ -569,28 +597,28 @@ void handleCommand(const String& chatId, String text) {
     if (argument.length()) {
       runAndReply(chatId, action, argument.toInt() * 60L);
     } else if (action == "shutdown") {
-      bot.sendMessageWithInlineKeyboard(chatId, "Shut down the PC? Unsaved work will be lost.", "", SHUTDOWN_KEYBOARD);
+      bot->sendMessageWithInlineKeyboard(chatId, "Shut down the PC? Unsaved work will be lost.", "", SHUTDOWN_KEYBOARD);
     } else {
-      bot.sendMessageWithInlineKeyboard(chatId, "Restart the PC? Unsaved work will be lost.", "", RESTART_KEYBOARD);
+      bot->sendMessageWithInlineKeyboard(chatId, "Restart the PC? Unsaved work will be lost.", "", RESTART_KEYBOARD);
     }
   } else if (command == "/sleep" || command == "/lock" || command == "/cancel") {
     runAndReply(chatId, command.substring(1), 0);
   } else {
-    bot.sendMessageWithInlineKeyboard(chatId, HELP_TEXT, "", MENU_KEYBOARD);
+    bot->sendMessageWithInlineKeyboard(chatId, HELP_TEXT, "", MENU_KEYBOARD);
   }
 }
 
 void handleMessages(int count) {
   for (int i = 0; i < count; i++) {
-    telegramMessage& message = bot.messages[i];
+    telegramMessage& message = bot->messages[i];
 
     if (message.type == "callback_query") {
-      bot.answerCallbackQuery(message.query_id);
+      bot->answerCallbackQuery(message.query_id);
     }
 
-    if (message.chat_id != ALLOWED_CHAT_ID) {
+    if (message.chat_id != settings.chatId) {
       Serial.println("Ignored message from unauthorized chat " + message.chat_id);
-      bot.sendMessage(message.chat_id, "Not authorized.", "");
+      bot->sendMessage(message.chat_id, "Not authorized.", "");
       continue;
     }
 
@@ -601,8 +629,8 @@ void handleMessages(int count) {
 // ---------- Web UI ----------
 
 bool checkWebAuth() {
-  if (!server.authenticate(WEB_USERNAME, WEB_PASSWORD)) {
-    server.requestAuthentication(BASIC_AUTH, "Remote PC Wake");
+  if (!server.authenticate(settings.webUser.c_str(), settings.webPassword.c_str())) {
+    server.requestAuthentication(BASIC_AUTH, "WakeDesk");
     return false;
   }
   return true;
@@ -666,8 +694,8 @@ void handleWebAction() {
 }
 
 void startWebServer() {
-  if (strlen(WEB_PASSWORD) == 0) {
-    Serial.println("Web UI disabled: set WEB_PASSWORD in config.h to enable it.");
+  if (settings.webPassword.isEmpty()) {
+    Serial.println("Web UI disabled: set a web password in the ESP32 settings to enable it.");
     return;
   }
   const char* headers[] = {"X-Requested-By"};
@@ -678,30 +706,30 @@ void startWebServer() {
   server.onNotFound([]() { server.send(404, "text/plain", "Not found"); });
   server.begin();
 
-  if (MDNS.begin(DEVICE_HOSTNAME)) {
+  if (MDNS.begin(settings.hostname.c_str())) {
     MDNS.addService("http", "tcp", 80);
   }
   webEnabled = true;
-  Serial.printf("Web UI: http://%s.local or http://%s\n", DEVICE_HOSTNAME, WiFi.localIP().toString().c_str());
+  Serial.printf("Web UI: http://%s.local or http://%s\n", settings.hostname.c_str(), WiFi.localIP().toString().c_str());
 }
 
 // ---------- Setup and main loop ----------
 
-// Fixed IP settings from config.h; only used when ESP32_STATIC_IP is set.
+// Fixed IP from the settings; only used when a static IP is set.
 IPAddress staticIp, staticGateway, staticSubnet, staticDns;
 
 bool useStaticIp() {
-  return strlen(ESP32_STATIC_IP) > 0;
+  return !settings.staticIp.isEmpty();
 }
 
 void connectWifi() {
   WiFi.persistent(false);  // don't write credentials to flash on every connect
   WiFi.mode(WIFI_STA);
-  WiFi.setHostname(DEVICE_HOSTNAME);
+  WiFi.setHostname(settings.hostname.c_str());
   if (useStaticIp()) {
     WiFi.config(staticIp, staticGateway, staticSubnet, staticDns);
   }
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  WiFi.begin(settings.wifiSsid.c_str(), settings.wifiPassword.c_str());
   WiFi.setSleep(true);  // modem sleep: radio powers down between router beacons
   WiFi.setTxPower(WIFI_TX_POWER);
   Serial.print("Connecting to Wi-Fi");
@@ -732,31 +760,37 @@ void setup() {
   // 80 MHz is the lowest frequency that keeps Wi-Fi working; plenty for this job.
   setCpuFrequencyMhz(CPU_FREQUENCY_MHZ);
 
-  if (!parseMac(PC_MAC, pcMac)) {
-    haltWithError("Invalid PC_MAC in config.h. Expected format AA:BB:CC:DD:EE:FF");
+  // Settings from NVS (or config.h), then a short window to change them over USB. Without
+  // settings, this waits until they're provisioned.
+  loadSettings();
+  runProvisioningWindow();
+
+  if (!parseMac(settings.pcMac.c_str(), pcMac)) {
+    haltWithError("Invalid PC MAC address in the settings. Expected format AA:BB:CC:DD:EE:FF");
   }
-  if (!pcIp.fromString(PC_IP_ADDRESS)) {
-    haltWithError("Invalid PC_IP_ADDRESS in config.h.");
+  if (!pcIp.fromString(settings.pcIp)) {
+    haltWithError("Invalid PC IP address in the settings.");
   }
   if (useStaticIp()) {
-    if (!staticIp.fromString(ESP32_STATIC_IP) || !staticGateway.fromString(NETWORK_GATEWAY) ||
-        !staticSubnet.fromString(NETWORK_SUBNET)) {
-      haltWithError("Invalid ESP32_STATIC_IP, NETWORK_GATEWAY or NETWORK_SUBNET in config.h.");
+    if (!staticIp.fromString(settings.staticIp) || !staticGateway.fromString(settings.gateway) ||
+        !staticSubnet.fromString(settings.subnet)) {
+      haltWithError("Invalid static IP, gateway or subnet in the settings.");
     }
     // Without a DNS server of its own, use the router, which forwards DNS queries.
-    if (!staticDns.fromString(NETWORK_DNS)) {
+    if (!staticDns.fromString(settings.dns)) {
       staticDns = staticGateway;
     }
   }
 
   connectWifi();
   secureClient.setCACert(TELEGRAM_CERTIFICATE_ROOT);
+  bot = new UniversalTelegramBot(settings.botToken, secureClient);
 
   // Discard messages sent while the ESP32 was offline, so an old /wake
   // doesn't turn on the PC unexpectedly after a power outage.
-  bot.getUpdates(-1);
+  bot->getUpdates(-1);
 
-  bot.setMyCommands(F("[{\"command\":\"wake\",\"description\":\"Turn on the PC\"},"
+  bot->setMyCommands(F("[{\"command\":\"wake\",\"description\":\"Turn on the PC\"},"
                       "{\"command\":\"status\",\"description\":\"Is the PC on? CPU, RAM, disks\"},"
                       "{\"command\":\"shutdown\",\"description\":\"Shut down (optionally in N minutes)\"},"
                       "{\"command\":\"restart\",\"description\":\"Restart (optionally in N minutes)\"},"
@@ -777,9 +811,9 @@ void setup() {
   }
   String hello = "🤖 ESP32 online (v" FIRMWARE_VERSION "). " + status;
   if (webEnabled) {
-    hello += "\n🌐 Web UI (home network): http://" + String(DEVICE_HOSTNAME) + ".local";
+    hello += "\n🌐 Web UI (home network): http://" + settings.hostname + ".local";
   }
-  bot.sendMessageWithInlineKeyboard(ALLOWED_CHAT_ID, hello, "", MENU_KEYBOARD);
+  bot->sendMessageWithInlineKeyboard(settings.chatId, hello, "", MENU_KEYBOARD);
 }
 
 void loop() {
@@ -792,10 +826,10 @@ void loop() {
   }
 
   if (millis() - lastPoll > POLL_INTERVAL_MS) {
-    int count = bot.getUpdates(bot.last_message_received + 1);
+    int count = bot->getUpdates(bot->last_message_received + 1);
     while (count) {
       handleMessages(count);
-      count = bot.getUpdates(bot.last_message_received + 1);
+      count = bot->getUpdates(bot->last_message_received + 1);
     }
     lastPoll = millis();
   }

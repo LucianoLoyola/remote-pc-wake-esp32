@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Check the [roadmap](https://github.com/LucianoLoyola/remote-pc-wake-esp32#roadmap--pending) first: your idea may already be planned.
+        Check the [roadmap](https://github.com/wakedesk/wakedesk-esp32#roadmap--pending) first: your idea may already be planned.
 
   - type: textarea
     id: problem

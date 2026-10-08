@@ -38,7 +38,7 @@ Waking the PC is only half the story. This runbook lets you **use** it from anyw
 Run the setup script on the **target PC** from an **elevated** PowerShell window (right-click Start → **Terminal (Admin)**):
 
 ```powershell
-cd path\to\remote-pc-wake-esp32
+cd path\to\wakedesk-esp32
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-RemoteAccess.ps1
 ```
 

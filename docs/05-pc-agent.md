@@ -48,10 +48,10 @@ So the firewall can allow **only** the ESP32:
 - **Automatic**, on the target PC. `auto` picks a free address near the top of your network, and the gateway and subnet are taken from the PC's network settings. You can also give a specific address instead of `auto`.
   ```powershell
   powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp auto
-  powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1
+  powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -SettingsOnly
   ```
-  To go back to automatic addressing: `New-FirmwareConfig.ps1 -Esp32UseDhcp`, then flash again.
-- **Manual:** in `config.h`, set `ESP32_STATIC_IP`, `NETWORK_GATEWAY` (your router) and `NETWORK_SUBNET`, then flash again.
+  To go back to automatic addressing: `New-FirmwareConfig.ps1 -Esp32UseDhcp`, then `Install-Firmware.ps1 -SettingsOnly`.
+- **Manual:** in `config.h`, set `ESP32_STATIC_IP`, `NETWORK_GATEWAY` (your router) and `NETWORK_SUBNET`, then send them with `Install-Firmware.ps1 -SettingsOnly`.
 
 > You can skip this and allow your whole local network instead (the default), but restricting it to the ESP32 is safer.
 >
@@ -118,7 +118,7 @@ In an elevated PowerShell window, from the repository folder. Replace `LocalSubn
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1
-powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -SettingsOnly
 ```
 
 **Manual:**
@@ -142,7 +142,7 @@ In Telegram, with the PC on:
 |---|---|---|
 | `-Esp32Address <ip>` | `LocalSubnet` | Only this address may reach the agent |
 | `-Port <port>` | `8765` | TCP port the agent listens on (must match `AGENT_PORT`) |
-| `-NewToken` | off | Generate a new token (e.g. if it leaked). Update `config.h` and re-flash afterwards. |
+| `-NewToken` | off | Generate a new token (e.g. if it leaked). Then run `New-FirmwareConfig.ps1` (as Administrator) and `Install-Firmware.ps1 -SettingsOnly`. |
 
 Running the installer again **updates** the agent and keeps the existing token.
 
@@ -187,7 +187,7 @@ This removes the scheduled task, the firewall rule and `C:\ProgramData\RemotePcW
 - Traffic between the ESP32 and the agent is plain HTTP on your local network. The token keeps other devices out, but someone already **inside** your network who can capture traffic could read it. On a typical home network this is an acceptable trade-off. Restrict the firewall rule to the ESP32's IP (`-Esp32Address`).
 - The agent can only do what its API allows (status, shutdown, restart, sleep, lock, cancel). It can't run arbitrary commands.
 - The token is stored in `C:\ProgramData\RemotePcWake\config.json` (Administrators and SYSTEM only) and in `config.h` (git-ignored). Never commit it.
-- If the token leaks: run the installer with `-NewToken`, update `config.h`, and re-flash.
+- If the token leaks: run the installer with `-NewToken`, then `New-FirmwareConfig.ps1` (as Administrator) and `Install-Firmware.ps1 -SettingsOnly`.
 
 ---
 
@@ -237,7 +237,7 @@ Invoke-RestMethod http://localhost:8765/api/status -Headers @{ 'X-Agent-Token' =
 | Symptom | Fix |
 |---|---|
 | Bot says "agent is not responding (no response)" | Check that the task is running: Task Scheduler → **Remote PC Wake Agent**, or `Get-ScheduledTask 'Remote PC Wake Agent'`. Read `C:\ProgramData\RemotePcWake\agent.log`. |
-| "agent is not responding (wrong token)" | `AGENT_TOKEN` in `config.h` doesn't match `config.json`. Run the installer again (it prints the current token), update `config.h`, re-flash. |
+| "agent is not responding (wrong token)" | `AGENT_TOKEN` in `config.h` doesn't match `config.json`. Run the installer again (it prints the current token), then `New-FirmwareConfig.ps1` (as Administrator) and `Install-Firmware.ps1 -SettingsOnly`. |
 | Works from the PC (`localhost`) but not from the ESP32 | Firewall: the ESP32's IP changed and doesn't match `-Esp32Address`. Reserve its IP in the router, or give it a fixed one ([Step 1](#step-1--reserve-an-ip-for-the-esp32)), and run the installer again with the new address. |
 | `/lock` says "Could not lock the session" | Nobody is signed in at the PC's screen, so there's nothing to lock. |
 | `/sleep` does nothing | Sleep may be disabled by the hardware or a policy. Check with `powercfg /a`. |

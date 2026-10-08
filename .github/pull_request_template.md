@@ -14,7 +14,7 @@
 
 - [ ] `tests/Invoke-ScriptAnalysis.ps1` passes (if PowerShell scripts changed).
 - [ ] The firmware compiles (if the firmware changed).
-- [ ] Scripts that change the PC: `.NOTES` help, [scripts reference](https://github.com/LucianoLoyola/remote-pc-wake-esp32/blob/main/docs/scripts-reference.md) and the runbook's Automatic/Manual options are updated.
+- [ ] Scripts that change the PC: `.NOTES` help, [scripts reference](https://github.com/wakedesk/wakedesk-esp32/blob/main/docs/scripts-reference.md) and the runbook's Automatic/Manual options are updated.
 - [ ] New `config.h` settings have a default in `remote-pc-wake.ino` and are documented in `config.example.h` and Runbook 03.
 - [ ] Documentation is updated, in English, without emojis.
 - [ ] No secrets (passwords, tokens, `config.h`) are included.
