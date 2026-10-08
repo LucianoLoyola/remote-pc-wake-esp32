@@ -17,7 +17,7 @@
     COM port of the ESP32 (e.g. COM3). Detected automatically if only one board is connected.
 
 .PARAMETER Version
-    Firmware release to install, e.g. 1.2.0. Default: the latest release.
+    Firmware release to install, e.g. 1.2.1. Default: the latest release.
 
 .PARAMETER Image
     Flash this local firmware image (a merged .bin) instead of downloading a release. For testing.

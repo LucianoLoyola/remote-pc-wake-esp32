@@ -1,18 +1,18 @@
 name: Firmware
 # Releases show as "Build: vX.Y.Z"; other runs keep the default name (the commit or PR title).
-run-name: "${{ github.event_name == 'release' && format('Build: {0}', github.event.release.tag_name) || '' }}"
+run-name: "${{ github.ref_type == 'tag' && format('Build: {0}', github.ref_name) || '' }}"
 
 # - Pull requests and main: build the firmware, so a change that breaks it can't be merged.
-# - Published release: check that FIRMWARE_VERSION matches the tag, build the generic image
-#   (no config.h, no personal data) and attach it to the release with its SHA-256.
+# - Tag vX.Y.Z: check that FIRMWARE_VERSION matches the tag, build the generic image
+#   (no config.h, no personal data) and publish the release with the image and its SHA-256
+#   in one step, so it works with immutable releases (assets can't be added after publishing).
 #   scripts/Install-Firmware.ps1 downloads that image.
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
-  release:
-    types: [published]
+    tags: ["v*"]
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
     name: Build firmware
     runs-on: ubuntu-24.04
     permissions:
-      contents: write   # attach the image to the release
+      contents: write   # create the release
     steps:
       - uses: actions/checkout@v7
 
@@ -57,8 +57,8 @@ jobs:
         run: |
           version=$(sed -n 's/^#define FIRMWARE_VERSION "\(.*\)"$/\1/p' "$SKETCH/remote-pc-wake.ino")
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          if [ "$GITHUB_EVENT_NAME" = "release" ] && [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::FIRMWARE_VERSION is $version but the release is $GITHUB_REF_NAME"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::FIRMWARE_VERSION is $version but the tag is $GITHUB_REF_NAME"
             exit 1
           fi
 
@@ -80,8 +80,11 @@ jobs:
           name: firmware
           path: dist/
 
-      - name: Attach to the release
-        if: github.event_name == 'release'
+      - name: Publish the release
+        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$GITHUB_REF_NAME" dist/* --clobber --repo "$GITHUB_REPOSITORY"
+        # gh creates a draft, uploads the files and then publishes it, so the published
+        # (immutable) release already has them.
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag \n            --title "$GITHUB_REF_NAME" --generate-notes

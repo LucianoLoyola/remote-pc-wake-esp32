@@ -113,7 +113,7 @@
 #include <ArduinoJson.h>
 #include "web_ui.h"
 
-#define FIRMWARE_VERSION "1.2.0"
+#define FIRMWARE_VERSION "1.2.1"
 
 #include "settings.h"
 

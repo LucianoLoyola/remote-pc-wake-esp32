@@ -132,7 +132,7 @@ The script:
 |---|---|
 | `-SettingsOnly` | You changed a setting with `New-FirmwareConfig.ps1` (Wi-Fi, bot token, web password...): sends it without flashing |
 | `-Port COM3` | Several boards are connected, or the port isn't detected |
-| `-Version 1.2.0` | You want a specific release instead of the latest |
+| `-Version 1.2.1` | You want a specific release instead of the latest |
 | `-Image path\to\file.bin` | You want to flash a local firmware image (for example, to test one before releasing it) |
 | `-Build` | You changed the firmware code or a build-time setting (needs [Runbook 02](02-development-environment.md)) |
 | `-Board esp32:esp32:esp32s3` | With `-Build`: your board isn't a classic ESP32 (S3, C3, S2...) |
