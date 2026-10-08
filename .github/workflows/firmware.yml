@@ -87,4 +87,4 @@ jobs:
         # gh creates a draft, uploads the files and then publishes it, so the published
         # (immutable) release already has them.
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag \n            --title "$GITHUB_REF_NAME" --generate-notes
+          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --title "$GITHUB_REF_NAME" --generate-notes
