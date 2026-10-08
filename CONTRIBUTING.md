@@ -95,7 +95,9 @@ The project uses [semantic versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 To publish a release (maintainers):
 
 1. Set `FIRMWARE_VERSION` in `firmware/remote-pc-wake/remote-pc-wake.ino` to the new version, in a pull request.
-2. After merging, publish a GitHub release with the tag `vX.Y.Z` on `main` and its notes.
-3. The **Firmware** workflow checks that the tag matches `FIRMWARE_VERSION`, builds the generic image (without `config.h`) and attaches `wakedesk-esp32-X.Y.Z.bin` and `SHA256SUMS` to the release. `Install-Firmware.ps1` installs it from there. Check that both files appear in the release before announcing it.
+2. After merging, tag `main` and push the tag: `git tag vX.Y.Z` and `git push origin vX.Y.Z`. Don't create the release on GitHub by hand.
+3. The **Firmware** workflow (run "Build: vX.Y.Z") checks that the tag matches `FIRMWARE_VERSION`, builds the generic image (without `config.h`) and publishes the release with `wakedesk-esp32-X.Y.Z.bin` and `SHA256SUMS` already attached, as required by immutable releases. `Install-Firmware.ps1` installs it from there.
+
+Releases are immutable: once published, their files and tag can't change. If a release goes out wrong, publish a new patch version.
 
 The released image never contains personal data: settings are sent to each ESP32 over USB (see `firmware/remote-pc-wake/settings.h`).
