@@ -1,4 +1,12 @@
-// Copy this file to "config.h" (same folder) and fill in your values.
+// Your WakeDesk settings. scripts\New-FirmwareConfig.ps1 creates config.h from this file;
+// you can also copy it to "config.h" (same folder) and fill it in by hand.
+//
+// config.h is used two ways:
+//   - scripts\Install-Firmware.ps1 reads it and sends the settings to the ESP32 over USB
+//     (the released firmware contains no settings);
+//   - if you build the firmware yourself, it's compiled in as the default settings.
+// Settings marked "build-time" only change with a build of your own (Install-Firmware.ps1 -Build).
+//
 // config.h is ignored by Git so your secrets never end up in the repository.
 
 #pragma once
@@ -45,7 +53,7 @@
 #define AGENT_TOKEN ""
 #define AGENT_PORT  8765
 
-// ---------- Notifications ----------
+// ---------- Notifications (build-time) ----------
 // How often the ESP32 checks whether the PC is on (seconds).
 #define MONITOR_INTERVAL_SECONDS 30
 
@@ -66,10 +74,10 @@
 // Name the ESP32 shows on your network.
 #define DEVICE_HOSTNAME "remote-pc-wake"
 
-// How long to wait for the PC to come online after /wake (seconds).
+// How long to wait for the PC to come online after /wake (seconds). Build-time.
 #define WAKE_TIMEOUT_SECONDS 120
 
-// ---------- Power saving ----------
+// ---------- Power saving (build-time) ----------
 // How often the ESP32 asks Telegram for new commands (seconds).
 // Higher = less power and network traffic, but /wake takes up to this long to react.
 #define POLL_INTERVAL_SECONDS 15

@@ -28,7 +28,7 @@
 .PARAMETER PcIp
     LAN IP of the target PC. Detected automatically when run on the target PC.
 .PARAMETER AgentToken
-    PC agent token. Read from the installed agent if omitted (Administrator).
+    PC agent token. Read from the installed WakeDesk app or PowerShell agent if omitted (Administrator).
 .PARAMETER WebPassword
     Web UI password (SecureString). Asked for securely the first time.
 .PARAMETER ChangeWebPassword
@@ -90,19 +90,13 @@ $SketchDir = Join-Path $RepoRoot 'firmware\remote-pc-wake'
 $ExamplePath = Join-Path $SketchDir 'config.example.h'
 if (-not $OutputPath) { $OutputPath = Join-Path $SketchDir 'config.h' }
 $AgentConfigPath = Join-Path $env:ProgramData 'RemotePcWake\config.json'
+$AppConfigPath = Join-Path $env:ProgramData 'WakeDesk\config.json'
 $ChatDetectTimeoutSeconds = 120
 
 # Values in config.example.h that mean "not configured yet"
 $Placeholders = @('YOUR_WIFI_NAME', 'YOUR_WIFI_PASSWORD', '123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ', '123456789', 'AA:BB:CC:DD:EE:FF', '')
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-function Get-Define([string]$Text, [string]$Key) {
-    if ($Text -match "(?m)^#define\s+$Key\s+`"((?:[^`"\\]|\\.)*)`"") {
-        return $Matches[1] -replace '\\(.)', '$1'
-    }
-    return ''
-}
 
 function Edit-Define([string]$Text, [string]$Key, [string]$Value) {
     $escaped = $Value.Replace('\', '\\').Replace('"', '\"')
@@ -272,6 +266,15 @@ Write-Ok "Allowed Telegram ID: $chat"
 # ---------------------------------------------------------------------------
 Write-Step 'PC agent'
 $agent = $AgentToken
+if (-not $agent -and (Test-Path (Split-Path $AppConfigPath))) {
+    try {
+        $agent = (Get-Content -Raw $AppConfigPath -ErrorAction Stop | ConvertFrom-Json).agent_token
+        Write-Ok 'Token read from the installed WakeDesk app.'
+    }
+    catch {
+        Write-Warn 'WakeDesk is installed but its token is only readable as Administrator. Run this script as Administrator, or pass -AgentToken.'
+    }
+}
 if (-not $agent -and (Test-Path (Split-Path $AgentConfigPath))) {
     try {
         $agent = (Get-Content -Raw $AgentConfigPath -ErrorAction Stop | ConvertFrom-Json).Token

@@ -61,7 +61,7 @@ git log -1     # the commit ID must match the latest commit shown on GitHub
 | [`Uninstall-Agent.ps1`](#uninstall-agentps1) | Yes | Removes what `Install-Agent.ps1` added | None |
 | [`Install-DevTools.ps1`](#install-devtoolsps1) | No | Installs Git, Arduino IDE/CLI, ESP32 package, libraries | winget, Arduino, Espressif, GitHub |
 | [`New-FirmwareConfig.ps1`](#new-firmwareconfigps1) | Only to read the agent token | Writes `config.h` inside the repository | Telegram (only to detect your ID) |
-| [`Install-Firmware.ps1`](#install-firmwareps1) | No | Nothing on the PC; writes the firmware to the ESP32 | None |
+| [`Install-Firmware.ps1`](#install-firmwareps1) | No | Downloads esptool and the firmware into `%LOCALAPPDATA%\WakeDesk`; writes the firmware and your settings to the ESP32 | GitHub (firmware and esptool releases) |
 | [`Send-MagicPacket.ps1`](#send-magicpacketps1) | No | Nothing | None (local network broadcast) |
 | [`Set-StaticIp.ps1`](#set-staticipps1) | Yes | Fixed IP address, gateway and DNS on the wired adapter | None (local network pings) |
 | [`tests/Invoke-ScriptAnalysis.ps1`](#testsinvoke-scriptanalysisps1) | No | Nothing | None |
@@ -146,7 +146,7 @@ Gives the PC a fixed IP address, for routers that can't reserve one. [Runbook 01
 
 | What | Change |
 |---|---|
-| IPv4 addressing | DHCP off; the fixed address (the one you give, or the suggested one you confirm), with the current subnet prefix and default gateway |
+| IPv4 addressing | DHCP off; the fixed address (the one you give, the suggested one you confirm, or with `-IpAddress auto` the suggested one without asking), with the current subnet prefix and default gateway |
 | DNS servers | Set to the ones currently in use (or the gateway, if there are none) |
 | If the router is unreachable afterwards | Automatically switches back to DHCP |
 | With `-UseDhcp` | DHCP back on; removes the fixed address, its default route and the fixed DNS servers |
@@ -226,11 +226,22 @@ Creates or updates the firmware's `config.h`. [Runbook 03, Step 4](03-telegram-b
 
 ## Install-Firmware.ps1
 
-Builds the firmware and uploads it to the ESP32. [Runbook 03, Step 5](03-telegram-bot-flash-and-deploy.md#step-5--upload-the-firmware)
+Installs the firmware on the ESP32 and sends your settings to it. [Runbook 03, Step 5](03-telegram-bot-flash-and-deploy.md#step-5--upload-the-firmware)
 
-**Changes made to this PC:** none. Arduino CLI keeps temporary build files in its own cache folder. The firmware is written to the **ESP32** over USB.
-**Reads:** connected USB devices, to find the ESP32's COM port.
-**Network access:** none.
+**Changes made to this PC:**
+
+| What | Change |
+|---|---|
+| `%LOCALAPPDATA%\WakeDesk\tools\esptool-<version>\` | esptool, Espressif's official flashing tool, downloaded once from its GitHub release. The script checks it against a **SHA-256 pinned in the script** and refuses to run it if it differs. |
+| `%LOCALAPPDATA%\WakeDesk\firmware\<version>\` | The released firmware image and its `SHA256SUMS`. The script refuses to flash an image whose hash doesn't match. |
+| `%LOCALAPPDATA%\WakeDesk\build\` | Only with `-Build` or `-CompileOnly`: the compiled firmware. |
+| The **ESP32** (over USB) | The firmware, then your settings (read from `config.h`), stored in the ESP32's memory. Flashing erases previously stored settings; the script always sends them again. With `-SettingsOnly`, only the settings are sent. |
+
+**Reads:** `config.h`, and the connected USB devices to find the ESP32's COM port.
+**Network access:** `api.github.com` and `github.com`: the releases of `wakedesk/wakedesk-esp32` (firmware) and `espressif/esptool` (once). None with `-Build`, `-CompileOnly` or `-SettingsOnly`.
+**Undo:** delete `%LOCALAPPDATA%\WakeDesk\`.
+
+The firmware image is built by GitHub Actions from the public source when a release is published ([`.github/workflows/firmware.yml`](../.github/workflows/firmware.yml)), without `config.h`, so it contains no personal data.
 
 ---
 

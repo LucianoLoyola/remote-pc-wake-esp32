@@ -162,6 +162,24 @@ function Format-Mac([string]$Mac) {
     return $Mac.Replace('-', ':').ToUpperInvariant()
 }
 
+# ---------- config.h ----------
+
+# Value of a string setting in config.h: #define KEY "value"
+function Get-Define([string]$Text, [string]$Key) {
+    if ($Text -match "(?m)^#define\s+$Key\s+`"((?:[^`"\\]|\\.)*)`"") {
+        return $Matches[1] -replace '\\(.)', '$1'
+    }
+    return ''
+}
+
+# Value of a numeric setting in config.h: #define KEY 1234
+function Get-DefineNumber([string]$Text, [string]$Key, [int]$Default) {
+    if ($Text -match "(?m)^#define\s+$Key\s+(\d+)\s*$") {
+        return [int]$Matches[1]
+    }
+    return $Default
+}
+
 # USB-to-serial chips found on ESP32 boards, by USB vendor ID.
 $Script:Esp32UsbVendors = @{
     'VID_10C4' = 'Silicon Labs CP210x'

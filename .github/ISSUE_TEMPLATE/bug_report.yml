@@ -8,7 +8,7 @@ body:
         Thanks for reporting! Before you start:
         - Check the troubleshooting section of the runbook for the step that fails.
         - **Remove secrets** from anything you paste: Wi-Fi password, bot token, agent token, Telegram ID.
-        - Security problems go through the [security policy](https://github.com/LucianoLoyola/remote-pc-wake-esp32/security/policy), not here.
+        - Security problems go through the [security policy](https://github.com/wakedesk/wakedesk-esp32/security/policy), not here.
 
   - type: dropdown
     id: area

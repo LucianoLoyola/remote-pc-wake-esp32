@@ -1,0 +1,87 @@
+name: Firmware
+# Releases show as "Build: vX.Y.Z"; other runs keep the default name (the commit or PR title).
+run-name: "${{ github.event_name == 'release' && format('Build: {0}', github.event.release.tag_name) || '' }}"
+
+# - Pull requests and main: build the firmware, so a change that breaks it can't be merged.
+# - Published release: check that FIRMWARE_VERSION matches the tag, build the generic image
+#   (no config.h, no personal data) and attach it to the release with its SHA-256.
+#   scripts/Install-Firmware.ps1 downloads that image.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+env:
+  # Pinned so every release builds the same way.
+  ARDUINO_CLI_VERSION: "1.5.1"
+  ESP32_CORE: "esp32:esp32@3.3.12"
+  LIBRARIES: "UniversalTelegramBot@1.3.0 ArduinoJson@7.4.3"
+  ESP32_INDEX: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+  FQBN: esp32:esp32:esp32
+  SKETCH: firmware/remote-pc-wake
+
+jobs:
+  build:
+    name: Build firmware
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write   # attach the image to the release
+    steps:
+      - uses: actions/checkout@v7
+
+      # Downloaded directly: arduino/setup-arduino-cli still runs on the deprecated Node.js 20.
+      - name: Install arduino-cli
+        run: |
+          base="https://github.com/arduino/arduino-cli/releases/download/v${ARDUINO_CLI_VERSION}"
+          archive="arduino-cli_${ARDUINO_CLI_VERSION}_Linux_64bit.tar.gz"
+          mkdir -p "$RUNNER_TEMP/arduino-cli" && cd "$RUNNER_TEMP/arduino-cli"
+          curl -fsSLO "$base/$archive"
+          curl -fsSL "$base/${ARDUINO_CLI_VERSION}-checksums.txt" | grep " ${archive}$" | sha256sum -c -
+          tar -xzf "$archive" arduino-cli
+          echo "$RUNNER_TEMP/arduino-cli" >> "$GITHUB_PATH"
+
+      - name: Install ESP32 core and libraries
+        run: |
+          arduino-cli core update-index --additional-urls "$ESP32_INDEX"
+          arduino-cli core install "$ESP32_CORE" --additional-urls "$ESP32_INDEX"
+          arduino-cli lib install $LIBRARIES
+
+      - name: Firmware version
+        id: version
+        run: |
+          version=$(sed -n 's/^#define FIRMWARE_VERSION "\(.*\)"$/\1/p' "$SKETCH/remote-pc-wake.ino")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_EVENT_NAME" = "release" ] && [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::FIRMWARE_VERSION is $version but the release is $GITHUB_REF_NAME"
+            exit 1
+          fi
+
+      - name: Build generic image
+        run: |
+          if [ -f "$SKETCH/config.h" ]; then echo "::error::config.h must never be committed"; exit 1; fi
+          arduino-cli compile --fqbn "$FQBN" --warnings all --output-dir build "$SKETCH"
+
+      - name: Package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir dist
+          cp build/remote-pc-wake.ino.merged.bin "dist/wakedesk-esp32-${VERSION}.bin"
+          (cd dist && sha256sum -- *.bin > SHA256SUMS && cat SHA256SUMS)
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: firmware
+          path: dist/
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/* --clobber --repo "$GITHUB_REPOSITORY"

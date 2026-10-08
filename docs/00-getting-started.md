@@ -2,13 +2,13 @@
 
 This guide takes you from zero to a working setup, in the most efficient order. Every Windows step is a **PowerShell script**; each step also links to the **detailed runbook section**, which explains the manual alternative and what to do if something goes wrong.
 
-**Total time:** about 1–1.5 hours, most of it downloads and reboots.
+**Total time:** about 1 hour, most of it reboots.
 
 ```
  Phase 1  Prepare the PC for Wake-on-LAN          BIOS (manual) + script      ~20 min
  Phase 2  Remote access: Tailscale + Remote Desktop  script                   ~10 min
  Phase 3  Install the PC agent                    script                      ~5 min
- Phase 4  Development tools                       script                      ~15 min
+ Phase 4  Development tools (optional)            only to modify the firmware
  Phase 5  Telegram bot + firmware                 BotFather (manual) + scripts ~10 min
  Phase 6  Final installation next to the router   router (manual) + script    ~10 min
  Phase 7  End-to-end test                         phone, outside home         ~10 min
@@ -42,10 +42,10 @@ This guide takes you from zero to a working setup, in the most efficient order. 
 
 ### Get the repository and open PowerShell
 
-1. On the target PC, download the repository: `git clone https://github.com/LucianoLoyola/remote-pc-wake-esp32.git`, or **Code → Download ZIP** on GitHub and extract it. → [details](02-development-environment.md#step-1--install-git-and-get-the-repository)
+1. On the target PC, download the repository: `git clone https://github.com/wakedesk/wakedesk-esp32.git`, or **Code → Download ZIP** on GitHub and extract it. → [details](02-development-environment.md#step-1--install-git-and-get-the-repository)
 2. Open an **elevated** PowerShell window (right-click Start → **Terminal (Admin)**) and go to the repository folder:
    ```powershell
-   cd $HOME\Documents\remote-pc-wake-esp32
+   cd $HOME\Documents\wakedesk-esp32
    ```
 
 All the commands below run from that window.
@@ -112,19 +112,15 @@ For now it allows your whole local network; you'll restrict it to the ESP32 in P
 
 ---
 
-## Phase 4 — Development tools
+## Phase 4 — Development tools (optional)
 
-Detailed runbook: [02 — Development environment](02-development-environment.md)
+**Skip this phase** unless you want to modify the firmware. Phase 5 installs the released firmware, which is already compiled: no Arduino, compiler or Python needed.
 
-Connect the ESP32 by USB and run:
+If you do want to build it yourself: [02 — Development environment](02-development-environment.md).
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-DevTools.ps1
 ```
-
-It installs Git, Arduino IDE, Arduino CLI, the ESP32 board package and the libraries, and checks the board's USB driver. → [Automatic setup](02-development-environment.md#automatic-setup-steps-27)
-
-**Checkpoint:** the script ends showing the ESP32's COM port (e.g. `[OK] Silicon Labs CP210x on COM3`).
 
 ---
 
@@ -139,15 +135,17 @@ Detailed runbook: [03 — Telegram bot, flashing and deployment](03-telegram-bot
    ```
    It detects the PC's MAC and IP and the agent token, asks for the Wi-Fi, bot token and web UI password, and asks you to send any message to your bot to detect your Telegram ID. → [Step 4](03-telegram-bot-flash-and-deploy.md#step-4--configure-the-firmware)
 
-   **If your router can't reserve addresses** (you used `Set-StaticIp.ps1` in Phase 1), give the ESP32 a fixed address now, so you don't have to flash it again later. Add `-Esp32StaticIp auto`, which picks a free address. → [details](05-pc-agent.md#step-1--reserve-an-ip-for-the-esp32)
+   **If your router can't reserve addresses** (you used `Set-StaticIp.ps1` in Phase 1), give the ESP32 a fixed address now. Add `-Esp32StaticIp auto`, which picks a free address. → [details](05-pc-agent.md#step-1--reserve-an-ip-for-the-esp32)
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\scripts\New-FirmwareConfig.ps1 -Esp32StaticIp auto
    ```
-3. Build and upload:
+3. Connect the ESP32 by USB (data cable) and install the firmware:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -Monitor
    ```
-   Write down the address in `Connected. IP: ...` (you'll need it in Phase 6), then press Ctrl+C to close the monitor. → [Step 5](03-telegram-bot-flash-and-deploy.md#step-5--upload-the-firmware)
+   It downloads the released firmware, checks it, writes it and sends your settings to the ESP32. Write down the address in `Connected. IP: ...` (you'll need it in Phase 6), then press Ctrl+C to close the monitor. If it gets stuck on *Connecting...*, hold the board's **BOOT** button. → [Step 5](03-telegram-bot-flash-and-deploy.md#step-5--upload-the-firmware)
+
+   Later, to change a setting (Wi-Fi, bot token, web password...): run `New-FirmwareConfig.ps1` with the change, then `Install-Firmware.ps1 -SettingsOnly`. No reflashing needed.
 
 **Checkpoint:** the bot sends **ESP32 online (vX.Y.Z)** with buttons, and `/status` shows the PC's CPU, RAM and disks.
 
@@ -199,9 +197,9 @@ Want to know exactly what a script changes on your PC before running it? See the
 | `Set-AutoSleep.ps1` | 2 | No | Sleep after N minutes of inactivity |
 | `Install-Agent.ps1` | 3, 6 | Yes | PC agent, its firewall rule and startup task |
 | `Uninstall-Agent.ps1` | — | Yes | Removes the PC agent |
-| `Install-DevTools.ps1` | 4 | No | Git, Arduino IDE/CLI, ESP32 package, libraries |
-| `New-FirmwareConfig.ps1` | 5 | Yes, to read the agent token | `config.h` |
-| `Install-Firmware.ps1` | 5 | No | Builds and uploads the firmware |
+| `Install-DevTools.ps1` | 4 (optional) | No | Git, Arduino IDE/CLI, ESP32 package, libraries |
+| `New-FirmwareConfig.ps1` | 5 | Yes, to read the agent token | `config.h` (your settings file) |
+| `Install-Firmware.ps1` | 5 | No | Downloads and writes the firmware, sends your settings to the ESP32 |
 
 Steps that can't be scripted from Windows: BIOS settings, router DHCP reservations (if your router can't do them, `Set-StaticIp.ps1` and `New-FirmwareConfig.ps1 -Esp32StaticIp auto` replace them), creating the bot in @BotFather, and disabling Tailscale key expiry.
 

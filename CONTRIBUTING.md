@@ -1,4 +1,4 @@
-# Contributing to remote-pc-wake-esp32
+# Contributing to WakeDesk
 
 Thanks for helping! Bug reports, hardware compatibility reports, documentation fixes and code are all welcome.
 
@@ -22,8 +22,8 @@ By participating you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md). 
 You need a Windows PC. Everything else is installed by the scripts:
 
 ```powershell
-git clone https://github.com/LucianoLoyola/remote-pc-wake-esp32.git
-cd remote-pc-wake-esp32
+git clone https://github.com/wakedesk/wakedesk-esp32.git
+cd wakedesk-esp32
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-DevTools.ps1     # Arduino CLI/IDE, ESP32 package, libraries
 Install-Module PSScriptAnalyzer -Scope CurrentUser                             # for the script checks
 ```
@@ -34,7 +34,7 @@ Useful commands:
 # Check every PowerShell script (the same checks GitHub runs on pull requests)
 powershell -ExecutionPolicy Bypass -File .\tests\Invoke-ScriptAnalysis.ps1
 
-# Build the firmware without uploading (needs a config.h; see Runbook 03)
+# Check that the firmware compiles (no ESP32 needed)
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -CompileOnly
 ```
 
@@ -51,7 +51,7 @@ These rules keep the project safe to run on other people's PCs and easy to follo
 - **One script per Windows configuration**, in `scripts/`, with shared helpers in `scripts/lib/Common.ps1`.
 - **Windows PowerShell 5.1 compatible**: it's the version every Windows PC has. No `??`, `?.`, ternary operators or other PowerShell 7-only syntax.
 - **Never download and run code**, and never hide what a script does: no `Invoke-Expression`, encoded commands or Base64-decoded code. The automated checks reject them.
-- **Install software only through winget** or the official Arduino/Espressif indexes.
+- **Install software only through winget**, the official Arduino/Espressif indexes, or an official release **pinned by version and SHA-256 in the script** (like esptool in `Install-Firmware.ps1`). Never run a download whose hash wasn't checked.
 - **Ask for Administrator only when needed** (`#Requires -RunAsAdministrator` or `Assert-Admin`).
 - **Safe to run again**: running a script twice must leave the same result.
 - **Passwords as `SecureString`**, asked for with `Read-Host -AsSecureString`, never as plain command-line arguments.
@@ -72,6 +72,7 @@ These rules keep the project safe to run on other people's PCs and easy to follo
 
 - **English**, plain and direct.
 - **No emojis** in the documentation.
+- Write the product name as **WakeDesk**, and use the colors in the [brand guide](docs/brand.md) for any UI or image.
 - Keep the [onboarding guide](docs/00-getting-started.md) in sync with the runbooks: it's the entry point for new users.
 - Relative links must work (they're checked when we review the pull request).
 
@@ -94,4 +95,7 @@ The project uses [semantic versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 To publish a release (maintainers):
 
 1. Set `FIRMWARE_VERSION` in `firmware/remote-pc-wake/remote-pc-wake.ino` to the new version, in a pull request.
-2. After merging, create the tag `vX.Y.Z` on `main` and publish the GitHub release with its notes.
+2. After merging, publish a GitHub release with the tag `vX.Y.Z` on `main` and its notes.
+3. The **Firmware** workflow checks that the tag matches `FIRMWARE_VERSION`, builds the generic image (without `config.h`) and attaches `wakedesk-esp32-X.Y.Z.bin` and `SHA256SUMS` to the release. `Install-Firmware.ps1` installs it from there. Check that both files appear in the release before announcing it.
+
+The released image never contains personal data: settings are sent to each ESP32 over USB (see `firmware/remote-pc-wake/settings.h`).

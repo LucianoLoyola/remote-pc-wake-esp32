@@ -90,7 +90,7 @@ The settings in the tables below keep their defaults. Edit `config.h` by hand to
 | `PC_IP_ADDRESS` | PC's fixed IP | Runbook 01, B4 |
 | `PC_CHECK_PORT` | `3389` if you use Remote Desktop, `445` otherwise | Must be a port the PC answers on while it's on |
 
-**Power-saving settings** (the defaults are fine for most people):
+**Power-saving settings** (the defaults are fine for most people; changing them needs a build of your own: `Install-Firmware.ps1 -Build`):
 
 | Setting | Default | Notes |
 |---|---|---|
@@ -98,18 +98,18 @@ The settings in the tables below keep their defaults. Edit `config.h` by hand to
 | `CPU_FREQUENCY_MHZ` | `80` | Lowest clock that supports Wi-Fi. |
 | `WIFI_TX_POWER` | `WIFI_POWER_11dBm` | Low transmit power, since the board sits next to the router. Raise it if Wi-Fi drops. |
 
-**Optional features** (you can enable them later and re-flash):
+**Optional features** (you can enable them later and send them with `Install-Firmware.ps1 -SettingsOnly`):
 
 | Setting | Default | Notes |
 |---|---|---|
 | `AGENT_TOKEN` / `AGENT_PORT` | empty / `8765` | Enables shutdown, restart, sleep, lock and PC stats. The agent installer prints both values ([Runbook 05](05-pc-agent.md)). Leave the token empty if you haven't installed the agent yet. |
 | `WEB_USERNAME` / `WEB_PASSWORD` | `admin` / empty | Web UI on your home network. **Disabled while the password is empty.** |
 | `ESP32_STATIC_IP` / `NETWORK_GATEWAY` / `NETWORK_SUBNET` / `NETWORK_DNS` | empty / empty / `255.255.255.0` / empty | Fixed IP for the ESP32, only if your router can't reserve one ([Runbook 05, Step 1](05-pc-agent.md#step-1--reserve-an-ip-for-the-esp32)). Empty = the router assigns it. `NETWORK_DNS` empty = use the router. |
-| `MONITOR_INTERVAL_SECONDS` | `30` | How often the ESP32 checks whether the PC is on (for notifications) |
-| `NOTIFY_UNEXPECTED_POWER_ON` / `_OFF` | `true` | Alert when the PC turns on or off without being asked through the bot |
-| `NOTIFY_AGENT_WARNINGS` | `true` | Forward agent warnings (disk almost full, Windows Update restart pending) |
+| `MONITOR_INTERVAL_SECONDS` | `30` | How often the ESP32 checks whether the PC is on (for notifications). Needs `-Build` to change. |
+| `NOTIFY_UNEXPECTED_POWER_ON` / `_OFF` | `true` | Alert when the PC turns on or off without being asked through the bot. Needs `-Build` to change. |
+| `NOTIFY_AGENT_WARNINGS` | `true` | Forward agent warnings (disk almost full, Windows Update restart pending). Needs `-Build` to change. |
 
-> `config.h` is listed in `.gitignore`, so it won't be committed.
+> `config.h` is listed in `.gitignore`, so it won't be committed. Despite its name, it's also your **settings file**: `Install-Firmware.ps1` reads it and sends the settings to the ESP32 over USB, so the released firmware works without compiling anything.
 
 ## Step 5 — Upload the firmware
 
@@ -121,13 +121,24 @@ Connect the ESP32 by USB and run:
 powershell -ExecutionPolicy Bypass -File .\scripts\Install-Firmware.ps1 -Monitor
 ```
 
-It compiles the firmware, finds the ESP32's COM port, uploads, and opens the serial monitor (Ctrl+C to exit). You should see `Connected. IP: ...` and get the "ESP32 online" message in Telegram.
+The script:
+
+1. Downloads the latest **released firmware** from GitHub and checks its SHA-256. Nothing is compiled, so you don't need Arduino.
+2. Writes it with **esptool**, Espressif's official flashing tool, downloaded once and checked against a pinned SHA-256.
+3. Sends your settings from `config.h` to the ESP32 over USB. They're stored on the ESP32, never in the firmware file.
+4. Opens the serial monitor (Ctrl+C to exit). You should see `Connected. IP: ...` and get the "ESP32 online" message in Telegram.
 
 | Option | Use it when |
 |---|---|
+| `-SettingsOnly` | You changed a setting with `New-FirmwareConfig.ps1` (Wi-Fi, bot token, web password...): sends it without flashing |
 | `-Port COM3` | Several boards are connected, or the port isn't detected |
-| `-Board esp32:esp32:esp32s3` | Your board isn't a classic ESP32 (S3, C3, S2...) |
+| `-Version 1.2.0` | You want a specific release instead of the latest |
+| `-Image path\to\file.bin` | You want to flash a local firmware image (for example, to test one before releasing it) |
+| `-Build` | You changed the firmware code or a build-time setting (needs [Runbook 02](02-development-environment.md)) |
+| `-Board esp32:esp32:esp32s3` | With `-Build`: your board isn't a classic ESP32 (S3, C3, S2...) |
 | `-CompileOnly` | You only want to check that it builds |
+
+Flashing erases the settings stored on the ESP32; the script always sends them again afterwards.
 
 If it gets stuck on *Connecting...*, hold the **BOOT** button on the board and run it again.
 
@@ -201,6 +212,6 @@ All commands, the web UI and every notification are described in [Daily use](usa
 | Bot replies slowly | Expected: replies take up to `POLL_INTERVAL_SECONDS`. Lower it if you prefer faster responses. |
 | Connected to Wi-Fi but the bot never replies | Wrong `BOT_TOKEN`; you didn't press **Start** in the bot chat; or `ALLOWED_CHAT_ID` is wrong (the Serial Monitor shows `Ignored message from unauthorized chat ...` with your real ID). |
 | `/wake` is sent but the PC doesn't power on | Repeat the local test in Runbook 01 (B5). If that fails too, it's a BIOS/Windows issue. Also confirm the ESP32 and the PC are on the same subnet. |
-| `/status` always says "off" | The PC's firewall blocks `PC_CHECK_PORT`, Remote Desktop is disabled, or the PC's IP changed (reserve it in the router, or fix it with `Set-StaticIp.ps1`, then run `New-FirmwareConfig.ps1` and flash again). Try `PC_CHECK_PORT 445`. |
-| ESP32 doesn't connect after setting `ESP32_STATIC_IP` | The address, gateway or subnet don't match your network. Run `New-FirmwareConfig.ps1 -Esp32StaticIp auto` on the target PC (it takes them from the PC), or `-Esp32UseDhcp` to go back, and flash again. |
+| `/status` always says "off" | The PC's firewall blocks `PC_CHECK_PORT`, Remote Desktop is disabled, or the PC's IP changed (reserve it in the router, or fix it with `Set-StaticIp.ps1`, then run `New-FirmwareConfig.ps1` and `Install-Firmware.ps1 -SettingsOnly`). Try `PC_CHECK_PORT 445`. |
+| ESP32 doesn't connect after setting `ESP32_STATIC_IP` | The address, gateway or subnet don't match your network. Run `New-FirmwareConfig.ps1 -Esp32StaticIp auto` on the target PC (it takes them from the PC), or `-Esp32UseDhcp` to go back, then `Install-Firmware.ps1 -SettingsOnly`. |
 | PC wakes up but you can't connect remotely | Tailscale "Run unattended" or key expiry ([Runbook 04](04-remote-access-tailscale.md)). |
